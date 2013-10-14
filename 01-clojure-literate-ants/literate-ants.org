@@ -1,0 +1,1060 @@
+#+TITLE: The Clojure Ants Simulation, in Literate Form
+#+AUTHOR: Rich Hickey (this literate/org-babel version, Kai Wu)
+#+EMAIL: k@limist.com
+#+LANGUAGE: en
+#+STARTUP: align indent fold nodlcheck hidestars oddeven lognotestate
+#+PROPERTY: tangle literate-ants.clj
+
+
+* Introduction
+** What is this, why is it worthwhile? Quickly please!
++ You're looking at a literate programming (LP) style, single-file
+  version of Rich Hickey's Clojure ants simulator, in Org mode format.
++ For best results please *use Emacs with Org mode to view this*
+  =.org= *file*. If you're looking at this on Github.com, STOP - the
+  rendering there is neither complete nor correct!
+
+** The *benefits* of LP using Emacs + Org
+1. Docs matter, a lot. With LP, documentation is integral to
+   development, never an afterthought.
+   - For all but small throwaway systems, you're likely keeping a
+     separate file of development notes already; LP would integrate
+     that.
+2. With one LP file, avoid the incidental/inessential complexity of
+   the filesystem: avoid context-switch overhead moving between files,
+   and sidestep your language's imposed filesystem structure.
+3. Org rocks for prose:
+   - Org's plain-text *markup is lightweight*, yet more powerful than
+     Markdown, and cleaner than rST.
+   - The *structural editing* provided by Org documents lets you
+     organize your thoughts/writing/code very quickly.  With good
+     structure even major revisions are easy.
+   - Org's exporter lets your *write-once, express-many-times*: you
+     can export an Org file to HTML (e.g. for blogging) or LaTeX
+     (for serious publishing).
+   - It's easy to version-control Org files.
+4. Org rocks for code:
+   - Each code block has flexible granularity: can be named and
+     referred to; evaluated or not; have data sent in or exported;
+     specify different REPL sessions; specify different target/tangled
+     files.
+   - Code blocks are syntax-highlighted.
+   - Code blocks are ready to edit: jump to major-mode editing easily.
+   - A single Org file can mix different languages.
+5. Meta-development, manage complexity from a coherent perspective: a
+   unified, single-file approach encourages holistic software
+   development and exposition, in a natural order, using structure to
+   enhance understanding.  LP is not just documentation and code
+   together: it's a *process and abstraction unifying the development
+   lifecycle*: requirements, architecture, design, code, tests,
+   deployment, and maintenance - can all be bound coherently in one
+   active format.
+
+** Why Clojure?
+[[http://clojure.org][Clojure]] is a modern Lisp dialect that runs (primarily) on the [[http://en.wikipedia.org/wiki/Jvm][Java
+Virtual Machine]]. As a language its main paradigm is [[http://en.wikipedia.org/wiki/Functional_programming][functional
+programming]] (vs. the usual [[http://en.wikipedia.org/wiki/Object-oriented_programming][OO]] or [[http://en.wikipedia.org/wiki/Imperative_programming][imperative]] languages of Java, Python,
+Ruby), and it also provides powerful constructs for concurrency such
+as [[http://en.wikipedia.org/wiki/Software_transactional_memory][software transactional memory (STM)]].
+
+So why use or learn Clojure?
+1. There are *technical* reasons, better covered elsewhere.
+2. There are *aesthetic* reasons: code is poetry, and like the best
+   poems, expressiveness (the ratio of power:symbols) matters, and
+   Clojure excels there.
+3. Last but certainly not least, there are *human* reasons: I've found
+   the Clojure community to be one of the smartest and friendliest
+   around: there's a lot of brilliant-yet-humble innovation going
+   on. If you've watched Hickey's talks and gotten a sense of his
+   character, the same spirit generally pervades Clojurians.
+
+** Why literate ants?
+When Clojure was invented and began picking up interest from
+2007/2008, its creator Rich Hickey would [[http://www.youtube.com/watch?v=dGVqrGmwOAw][highlight Clojure's features
+with a demo program]]: a visual simulation of ants seeking food on a
+finite 2-D "world" board. I found the =ants.clj= program fascinating,
+particularly as simulation is a core interest. Historically,
+[[https://en.wikipedia.org/wiki/Object-oriented_programming#History][simulations motivated the object-oriented programming]] paradigm, so
+seeing a very different yet concise way to fulfill requirements of
+encapsulation, concurrent state, and modeling changes over time drew
+me in to Clojure.
+
+To build more skill in Clojure, I wanted to fully understand
+=ants.clj=.  I also wanted to try Knuth's [[http://vasc.ri.cmu.edu/old_help/Programming/Literate/literate.html][literate programming
+approach]] (LP), using my favorite tool: [[http://www.gnu.org/software/emacs/][Emacs]] and its peerless
+[[http://orgmode.org][org-mode]]. Thus this =.org= file (and its HTML or PDF version) you're
+now looking at is the literate version of Hickey's =ants.clj= code. I
+took the original program, made minor changes for my comprehension,
+and offer it as a working example of literate Clojure.
+
+** Overview and setup
+*** Prerequisites
+1. A recent version of Emacs (ideally 24.3+).
+2. Both org-mode and =clojure-mode= installed; use Emacs ELPA.
+   - Consider using an Emacs "starter package" that provides a good
+     baseline, like [[http://batsov.com/prelude/][Emacs Prelude]] or [[http://overtone.github.io/emacs-live/][Emacs Live]].
+
+Then if you start Emacs and load this file, you'll see it the way it's
+meant to be seen: as a multi-level, hierarchically organized and
+structured literate code file, w/ syntax-highlighted code blocks.  
+
+*** Useful commands
+- Use =SHIFT-TAB= and org-mode will cycle through top-level, headings,
+  and full-expanded displays.
+- To generate a source-file from this =.org= file, =CTRL-c-v-t= to do
+  the /tangling/ step; that means org-mode will process each code
+  block below, and generate the source file =literate-ants.clj=
+
+*** Skip to the end? Good idea!
+Before you dive into the actual code, you may want to run the ants
+simulation first - seeing it in action will help with understanding
+the details too.  So tangle this literate file per above instructions,
+so you have the =literate-ants.clj= file, then jump down to [[Running
+the Program]].
+
+** Caveats - this may not be the LP you're looking for
+1. Don't take this file as anything like an ideal literate programming
+   example!  This is just my version of understanding Rich Hickey's
+   code, thus it does not reflect a complete or proper literate
+   programming approach to use.
+   - And what's *proper LP*? See the last 2009 comment on the
+     [[http://www.literateprogramming.com/][literateprogramming.com page]].  LP is not just about
+     documentation, but is a tool/approach for higher-level
+     abstraction, combining human thought and code.
+   - So beware: much of my prose below is relatively verbose and
+     explanatory (the /what/ and /how/ of code), as opposed to what
+     could/should be in the literate sections: meta, /why/, high-level
+     discussion of major design choices.
+2. This version does not yet reflect more recent (post Clojure 1.2)
+   changes to the language, e.g. =defstruct= is still used below, but
+   has been deprecated in favor of [[http://clojure.org/datatypes][Clojure records]].
+3. My Java experience is quite limited, so parts which rely heavily on
+   Java, such as the UI, I don't attempt to explain in-depth.
+
+
+* The Simulation World
+The first part of =ants.clj= sets up the simulation world, where we'll
+be introduced to some of Clojure's powers.
+
+** Initial setup of constants/magic-numbers
+After the copyright notice, the initial setup code of =ants.clj= is
+easy to understand (for coders at least), even if you've never dealt
+with Lisp before. We see parameters (aka constants and magic numbers)
+being defined for later use using Clojure's =[[http://clojure.org/special_forms#def][def]]= special form: =def=
+creates a var (a mutable storage location) which connects a symbol to
+a value in the current [[http://clojure.org/namespaces][namespace]].
+
+#+name: sim-world-setup
+#+BEGIN_SRC clojure :exports code :results silent :session s1 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; ant sim ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;   Copyright (c) Rich Hickey. All rights reserved.
+;;
+;;   The use and distribution terms for this software are covered by the
+;;   Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+;;   which can be found in the file CPL.TXT at the root of this distribution.
+;;   By using this software in any fashion, you are agreeing to be bound by
+;;   the terms of this license.
+;;
+;;   You must not remove this notice, or any other, from this software.
+
+
+;; Set dimensions of the world, as a square 2-D board:
+(def dim 80)
+;; Number of ants = nants-sqrt^2
+(def nants-sqrt 7)
+;; Number of places with food:
+(def food-places 35)
+;; Range of amount of food at a place:
+(def food-range 100)
+;; Scale factor for pheromone drawing:
+(def pher-scale 20.0)
+;; Scale factor for food drawing:
+(def food-scale 30.0)
+;; Evaporation rate:
+(def evap-rate 0.99)
+
+(def animation-sleep-ms 100)
+(def ant-sleep-ms 40)
+(def evap-sleep-ms 1000)
+  
+(def running true)
+#+END_SRC
+
+** The board: ready to mutate via transactions
+Things get more interesting once the actual simulation environment
+needs defining: 
+#+BEGIN_SRC clojure :exports code :results silent :session s1 
+(defstruct cell :food :pher)  ; May also have :ant and :home values
+#+END_SRC
+First, a call to =[[http://clojuredocs.org/clojure_core/clojure.core/defstruct][defstruct]]= (like a hashmap or dictionary in other
+languages) defines a baseline /cell/. 
+- =defstruct= is like a very lightweight class or
+  constructor/template function, and conveniently wraps Clojure's
+  =[[http://clojuredocs.org/clojure_core/clojure.core/create-struct][create-struct]]=.
+- Here, a cell has two keys to start, =:food= and =:pher=, to
+  indicate the presence of food and pheromones. A cell may also have
+  keys of =:ant= and =:home=, depending on whether an ant and/or the
+  home-colony is present.
+
+Next, the =world= function creates the 2-dimensional "board" of cells
+(here, a square of 80x80 cells), represented as vectors (rows or the
+vertical y-dimension) of a vector (the horizontal x-dimension columns
+in one row):
+#+name sim-world-board-creation
+#+BEGIN_SRC clojure :exports code :results silent :session s1 
+;; World is a 2d vector of refs to cells
+(def world 
+     (apply vector 
+            (map (fn [_] 
+                   (apply vector
+                          (map (fn [_]
+                                 (ref (struct cell 0 0))) 
+                               (range dim)))) 
+                 (range dim))))
+#+END_SRC
+Reading the above:
+- Start with the innermost =[[http://clojuredocs.org/clojure_core/clojure.core/map][map]]= call, which uses an anonymous
+  function to create one column of 80 cells, per =(range dim)=. The
+  =[[http://clojuredocs.org/clojure_core/clojure.core/struct][struct]]= returns a new structmap instance using the earlier cell as
+  the basis, initializing the =:food= and =:pher= values to zero.
+- But notice that =struct= is wrapped with a [[http://clojure.org/refs][transactional ref]], and
+  here's the first glimpse of Clojure's concurrency powers. With
+  each cell being stateful (possibly time-varying values of =:food=,
+  =:pher=, =:ant=, and =:home= values) and with multiple threads
+  updating the board and board elements, we'd typically think of
+  using locks on each cell when updating its state.
+
+  But in Clojure with its [[http://en.wikipedia.org/wiki/Software_transactional_memory][software transactional memory]] (STM), we
+  just use =ref= for safe references to mutable collections (here, a
+  =struct=) - all changes to a cell will then be atomic, consistent,
+  and isolated![fn:Databases-ACID] Like using an RDBMS, you don't
+  need to manually manage concurrency.
+- Once you understand the innermost =(ref (struct cell 0 0 ))= =map=
+  call, the rest of =(def world...)= is straightforward: =apply=
+  uses =vector= as a constructor function with the =map= function
+  producing the vector's arguments, creating a "column" in the 2-D
+  board.
+- Then the pattern is repeated in the outermost 
+  =(apply vector (map...))= call, creating all the columns of the
+  2-D board.
+- Note that as defined, each vector in =world= (again, a 2-D vector of
+  vectors) corresponds to an x-position, and of course, within that
+  vector are the y-positions (here, a total of 80 cells).
+
+
+The =place= function is a selector function (think of "place" as the
+noun, not the verb) returning particular cells in the 2-D world. Once
+we have a cell, we can then mutate it to represent ants, food, and
+pheromones (or their absence):
+#+BEGIN_SRC clojure :exports code :results silent :session s1 
+(defn place [[x y]]
+  (-> world (nth x) (nth y)))
+#+END_SRC
+- =place= takes a single vector argument (having two elements x and
+  y), then applies the [[http://www.colourcoding.net/blog/archive/2011/07/09/another-go-at-explaining-the-thrush-operator-in-clojure.aspx][thrush operator]] (the [[http://clojuredocs.org/clojure_core/clojure.core/-%3E][arrow-like ->]]) on the
+  world object, first selecting the "column" =(nth x)= on world, then
+  the "row" =(nth y)= on that column.
+
+
+[fn:Databases-ACID] STM is like a memory-only SQL database, thus the last property of being durable/persistent won't be satisfied.
+
+*** Aside: the thrush operator
+The thrush operator helps make code more concise, and arguably
+clearer: instead of reading code "inside-out" to mentally evaluate it,
+we can read it left-to-right.[fn:Fogus-on-thrush] Consider how the
+equivalent =place= function would look without thrushing:
+
+#+BEGIN_SRC clojure :exports code
+(defn place-verbose [[x y]]
+  (nth (nth world x) y))
+#+END_SRC
+
+[fn:Fogus-on-thrush] Apparently Clojure's thrush is not quite a true
+thrush, see [[http://blog.fogus.me/2010/09/28/thrush-in-clojure-redux/][Michael Fogus' article]].
+
+** Ants as agents - doing asynchronous uncoordinated changes
+Next we'll consider the "active things" in =ants.clj=, the ants
+themselves. As before, we start with =defstruct=, defining an ant as
+having only one required key, its direction. (An ant may temporarily
+have another key, =:food=.)
+
+#+name ants-defined
+#+BEGIN_SRC clojure :exports code :results silent :session s1 
+(defstruct ant :dir)  ; Always has dir heading; may also have :food
+
+(defn create-ant 
+  "Create an ant at given location, returning an ant agent on the location."
+  [location direction]
+    (sync nil
+      (let [the-place (place location)
+            the-ant (struct ant direction)]
+        (alter the-place assoc :ant the-ant)
+        (agent location))))
+
+#+END_SRC
+
+To explain the above constructor function for ants, =create-ant=:
++ Takes two arguments, =location= and =direction=. =location= will be
+  a vector =[x y]=, and as we saw, passed on to the place function as
+  an argument; =direction= is a number from 0-7 inclusive
+  corresponding to one of the eight cardinal directions.
++ More concurrency support: the [[http://clojuredocs.org/clojure_core/clojure.core/sync][sync function]] takes a flags argument
+  (as of Clojure 1.3, it's still ignored so just pass nil), and then a
+  list of expressions that will be executed together atomically (all
+  or nothing) as a transaction.
++ The [[http://clojuredocs.org/clojure_core/clojure.core/let][let special form]] binds pairs of symbols and expressions in its
+  arguments vector, providing local, lexical bindings within the scope
+  of the body following.
++ =sync= will ensure that any mutations of refs using the [[http://clojuredocs.org/clojure_core/clojure.core/alter][alter
+  function]] will be atomic. Previously we had used =ref= around each
+  cell, so in the above code where =the-place= is such a ref-wrapped
+  cell, =alter= takes =the-place= ref as its first argument, then
+  =[[http://clojuredocs.org/clojure_contrib/clojure.contrib.generic.collection/assoc][assoc]]= as the function to be [[http://clojuredocs.org/clojure_core/clojure.core/apply][apply]]'ed on the-place, tying a new ant
+  instance to it (remember that as a cell, =the-place= is sure to have
+  =:food= and =:pher= key-values already, now we add =:ant=). Like the
+  thrush operator earlier, the syntax of =alter= enables convenient
+  left-to-right reading.
++ Finally, the [[http://clojuredocs.org/clojure_core/clojure.core/agent][agent function]]. What are Clojure agents? To quote the
+  docs, 
+  #+BEGIN_QUOTE
+  Agents provide shared access to mutable state. They allow
+  non-blocking (asynchronous as opposed to synchronous atoms) and
+  independent change of individual locations (unlike coordinated
+  change of multiple locations through refs).
+  #+END_QUOTE
+
+  Clojure's =agent= function takes one required argument of state,
+  returning an agent object with initial value of that given state.
+  Here, as the last line of =create-ant=, =agent= effectively returns
+  the ant object at its starting location. Ants as agents make sense:
+  we expect them to move around independently (i.e. asynchronously) in
+  the simulation world.
+
+** Setting up the home, and ants
+The home of the ants is not a single cell on the world-board, but a
+square of cells, with its top-left corner offset from the origin (0,
+0). Its sides are proportional to the number of ants because the home
+square will initially contain all the ants - one ant per cell - before
+the simulation runs. We can see these two aspects of the home-square
+in the two =def= calls for =home-offset= and =home-range= below.
+
+#+name home-setup
+#+BEGIN_SRC clojure :exports code :results silent :session s1 
+(def home-offset (/ dim 4))
+(def home-range (range home-offset (+ nants-sqrt home-offset)))
+
+(defn setup 
+  "Places initial food and ants, returns seq of ant agents."
+  []
+  (sync nil
+    (dotimes [i food-places]
+      (let [p (place [(rand-int dim) (rand-int dim)])]
+        (alter p assoc :food (rand-int food-range))))
+    (doall
+     (for [x home-range y home-range]
+       (do
+         (alter (place [x y]) assoc :home true)
+         (create-ant [x y] (rand-int 8)))))))
+#+END_SRC
+
+The =setup= function's docstring tells us what it's doing, so on to
+the details:
++ =setup= takes no arguments.
++ As we saw before in =create-ant=, the =sync= function wraps a
+  sequence of expressions that together should be executed atomically,
+  all-or-nothing.
++ Setup initial food: The [[http://clojuredocs.org/clojure_core/clojure.core/dotimes][dotimes function]] takes two arguments, the
+  first a vector =[name n]= with =n= being the number of times that
+  the =body= (the second argument) will be repeatedly executed,
+  usually for its side-effects/mutations.
+  - Here, the unused name =i= is bound to the integers from 0 to 34,
+    since we had specified food-places as 35 initially.
+  - The =body= is clear enough: bind =p= to the randomly chosen place
+    on the world-board (using the [[http://clojuredocs.org/clojure_core/clojure.core/rand-int][rand-int function]] for x, y). The
+    already-seen =alter= function modifies that =p= to have a random
+    amount of food value.
++ Placing the ants in their starting positions: The [[http://clojuredocs.org/clojure_core/clojure.core/doall][doall function]]
+  forces immediate evaluation of a lazy sequence - in this case the
+  lazy sequence produced by the [[http://clojuredocs.org/clojure_core/clojure.core/for][for function]].
+  - Here, the =for= function's first argument is: two
+    binding-form/collection-expr pairs for every x and y position
+    within the square of the ants' home.
+  - The =for= function's second argument is the body-expression, here
+    wrapped in the [[http://clojuredocs.org/clojure_core/clojure.core/do][do special form]] which ensures order of evaluation
+    (usually, of expressions having side-effects): designate the place
+    as a home position, then create an ant on that place with a random
+    initial direction.
+
+In sum, the =setup= function shows how to deal with state and its
+mutation in Clojure: we started with a 2-D world-board of places
+(cells) as Clojure refs; then we modify/mutate each place using
+=alter=. We can use various looping functions such as =dotimes= and
+=doall= to process a batch of state-mutations (of the world-board)
+atomically and consistently.
+
+** Orientation and moving around the world
+Next, consider facing/orientation and moving to another place in the
+2-D world. Three functions below, followed by explanations:
+
+#+name world-wrapping
+#+BEGIN_SRC clojure :exports code :results silent :session s1 
+(defn bound 
+  "Returns given n, wrapped into range 0-b"
+  [b n]
+  (let [n (rem n b)]
+    (if (neg? n) 
+      (+ n b) 
+      n)))
+
+;; Directions are 0-7, starting at north and going clockwise. These are
+;; the 2-D deltas in order to move one step in a given direction.
+(def direction-delta {0 [0 -1]
+                      1 [1 -1]
+                      2 [1 0]
+                      3 [1 1]
+                      4 [0 1]
+                      5 [-1 1]
+                      6 [-1 0]
+                      7 [-1 -1]})
+
+(defn delta-location 
+  "Returns the location one step in the given direction. Note the
+  world is a torus."
+  [[x y] direction]
+  (let [[dx dy] (direction-delta (bound 8 direction))]
+    [(bound dim (+ x dx)) (bound dim (+ y dy))]))
+#+END_SRC
+
+With the 2-D world board, we have the 8 cardinal directions (North,
+North-East, East, etc.), and board edges that wrap-around to the
+opposite side - like the old arcade games of the 1980's, e.g. [[http://en.wikipedia.org/wiki/Pac-Man][Pac-Man]]
+and [[http://en.wikipedia.org/wiki/Asteroids_(video_game)][Asteroids]]. The functions =bound= and =delta-location= help enforce
+these world-behaviors, while the definition of =direction-delta= maps
+a movement in a cardinal direction to the corresponding change in x
+and y. A few comments on each:
+- The =bound= function using the built-in [[http://clojuredocs.org/clojure_core/clojure.core/rem][rem (i.e. remainder)
+  function]] is straightforward. Observe how =bound= is used in
+  delta-location to ensure wrap-around behavior in: 1) cardinal
+  directions; 2) the world-board, at its edges given by =dim=.
+- =direction-delta= maps the eight cardinal directions (0 is North) to
+  the corresponding changes in =[x y]=. Note the syntax: it's an
+  array-map literal, where the order of insertion of key-value pairs
+  (here, keys 0-7) will be preserved.
+- =delta-location= takes the current =[x y]= location and a direction,
+  returning the new corresponding location on the world-board.
+
+** Ant-agent behavior functions
+In Hickey's simulation, ants need to move (rotation and translation),
+pick up and drop-off food, and make rudimentary decisions.
+
+*** Ant movements
+Our ants need two behaviors to get around their world: turning (or
+changing the direction they "face"), and stepping forward.  Let's deal
+with turning first:
+
+#+name ant-agent-turn
+#+BEGIN_SRC clojure :exports code :results silent :session s1 
+;; An ant agent tracks the location of an ant, and controls the
+;; behavior of the ant at that location.
+
+(defn turn 
+  "Turns the ant at the location by the given amount."
+  [loc amt]
+  (dosync
+   (let [p (place loc)
+         ant (:ant @p)]
+     (alter p assoc :ant (assoc ant :dir (bound 8 (+ (:dir ant) amt))))))
+  loc)
+#+END_SRC
+
+The =turn= function takes two arguments, location and the amount of
+turn. What's interesting is the usage of [[http://clojuredocs.org/clojure_core/clojure.core/dosync][the dosync function]], which
+ensures the ant's turn - the changes of state within the =assoc=
+function calls - is all-or-nothing. The ant gets a new direction per
+the innermost =assoc=, then the outermost =assoc= updates the =place=
+with the updated ant.
+
+Now for actual movement to a new place:
+
+#+name ant-agent-move
+#+BEGIN_SRC clojure :exports code :results silent :session s1 
+(defn move 
+  "Moves the ant in the direction it is heading. Must be called in a
+  transaction that has verified the way is clear."
+  [startloc]
+  (let [oldp (place startloc)
+        ant (:ant @oldp)
+        newloc (delta-location startloc (:dir ant))
+        newp (place newloc)]
+    ;; move the ant
+    (alter newp assoc :ant ant)
+    (alter oldp dissoc :ant)
+    ;; leave pheromone trail
+    (when-not (:home @oldp)
+      (alter oldp assoc :pher (inc (:pher @oldp))))
+    newloc))
+#+END_SRC
+
+The =move= function changes state of both the ant and board, thus the
+doc-string note that it must be called in a transaction. The code is
+self-explanatory, though if "pheromone" is a new term to you, you'll
+want to [[http://en.wikipedia.org/wiki/Pheromone][learn about a dominant form of chemical communication]] on
+Earth. Whenever our artificial ant is not within its home, it will
+"secrete" pheromone (=inc= the =:pher= value by 1) at the place it
+just left, making it easier (more likely) for it and other ants to
+travel between home and food locations in the future (instead of doing
+a completely random walk).
+
+*** Ants and food
+When an ant finds food, it "picks up" one unit of it; when it returns
+home with a food unit, it will "drop" its food there. These two
+interactions (each having two steps) change the board, and as with the
+=move= function, they need to occur atomically (all-or-nothing) to
+ensure the [[http://www.youtube.com/watch?v=z_KmNZNT5xw][world is in a consistent state]]. 
+
+#+name ant-agent-food
+#+BEGIN_SRC clojure :exports code :results silent :session s1 
+(defn take-food [loc]
+  "Takes one food from current location. Must be called in a
+  transaction that has verified there is food available."
+  (let [p (place loc)
+        ant (:ant @p)]    
+    (alter p assoc 
+           :food (dec (:food @p))
+           :ant (assoc ant :food true))
+    loc))
+
+(defn drop-food [loc]
+  "Drops food at current location. Must be called in a
+  transaction that has verified the ant has food."
+  (let [p (place loc)
+        ant (:ant @p)]    
+    (alter p assoc 
+           :food (inc (:food @p))
+           :ant (dissoc ant :food))
+    loc))
+#+END_SRC
+
+Notice how similar the structure is for the two functions above;
+possibly they're candidates for macro refactoring.
+
+*** Ant judgment
+Our ants need some decision-making for their overall task of finding
+food and bringing it home.  As we'll see shortly, an ant's behavior
+is based on two states, either:
+1. The ant does not have food, and is looking for it. In this mode, it
+   weighs the three map locations ahead of it (ahead, ahead-left,
+   ahead-right) by the presence of either food or pheromone.
+2. The ant has food, and needs to bring it to the home box/location.
+   Now it weighs which of the three ahead-positions to take by the
+   presence of pheromone, or home.
+
+So we need functions to express preference of the next location for an
+ant. The functions =rank-by= and =wrand= help with that.
+
+#+name ant-agent-judgment-1
+#+BEGIN_SRC clojure :exports code :results silent :session s1 
+(defn rank-by 
+  "Returns a map of xs to their 1-based rank when sorted by keyfn."
+  [keyfn xs]
+  (let [sorted (sort-by (comp float keyfn) xs)]
+    (reduce (fn [ret i] (assoc ret (nth sorted i) (inc i)))
+            {} (range (count sorted)))))
+#+END_SRC
+
+The =rank-by= function gives weights to where an ant will move next in
+the simulation world. It takes two arguments, =keyfn= and =xs= - but
+what do those args look like, and where is =rank-by= used? In the
+=behave= function below; you'll see that the =keyfn= checks for the
+presence of =:food=, =:pher=, or =:home= - in the three cells (board
+locations) of the =xs= vector of =[ahead ahead-left ahead-right]=.[fn:Mutex-cell-values]
+- The [[http://clojuredocs.org/clojure_core/clojure.core/sort-by][(sort-by keyfn coll) function]] returns a sorted sequence of items
+  in coll, ordered by comparing =(keyfn item)=. Here, for the local
+  value sorted, it will be ascending order of cells/places, by
+  their :food/:home/:pher values - each of those is valuable to an ant
+  depending on whether it's looking for food, or bringing it home.
+- The [[http://clojuredocs.org/clojure_core/clojure.core/reduce][(reduce f initial-val coll) functionn]] in its 3-arguments form
+  here has its 1st argument =f= as a function taking two arguments, the
+  current/initial-val value and the next/first item from coll. In this
+  case, it will "build-up" a map from the local sorted value, with the
+  keys being the ranked cells/places, and the values being integers 1,
+  2 and 3. To get a sense of what's going on, try this on your Clojure
+  REPL:
+  #+BEGIN_SRC clojure
+  (let [sorted [0 0.7 1.0]] 
+    (reduce (fn [ret i] (assoc ret (nth sorted i) (inc i)))
+            {} 
+            (range (count sorted))))
+  ;; You should see {1.0 3, 0.7 2, 0 1}
+  ;; 
+  ;; Within the behave function below, the return value might be
+  ;; like {<cell-ahead-left> 3, <cell-ahead-right> 2, <cell-ahead> 1} 
+  ;; or similar.
+  #+END_SRC
+
+[fn:Mutex-cell-values] Remember that =:food=, =:pher=, and =:home= are mutually exclusive in a cell. When an ant wants to go home with food, and the home cell(s) is ahead of it, it will always go home, there won't be competing =:pher= presence.
+
+Next: The =wrand= function helps with the larger task of randomizing
+which location/cell the ant moves to next in a weighted manner; i.e.
+the "dice" are loaded with =rank-by=, then "rolled" here:
+
+#+name ant-agent-judgment-2
+#+BEGIN_SRC clojure :exports code :results silent :session s1 
+(defn wrand 
+  "Given a vector of slice sizes, returns the index of a slice given a
+  random spin of a roulette wheel with compartments proportional to
+  slices."
+  [slices]
+  (let [total (reduce + slices)
+        r (rand total)]
+    (loop [i 0 sum 0]
+      (if (< r (+ (slices i) sum))
+        i
+        (recur (inc i) (+ (slices i) sum))))))
+#+END_SRC
+
+How is =wrand= used? Like =rank-by=, look in the =behave= function:
+its single argument of slices is a vector of 3 integers (from
+=rank-by= above), corresponding to the relative desirability of the 3
+cells ahead of the ant. So if the slices argument looked like =[0 3
+1]=, that would correspond to zero probability of moving ahead, and
+3/4 chance moving to the ahead-left cell over the ahead-right cell.
+- The =let= value =total= uses =reduce= to set the upper bound on the
+  random number; loosely like setting the maximum number of faces on
+  the die to be rolled (albeit that some die numbers are geometrically
+  impossible).
+- The [[http://clojuredocs.org/clojure_core/clojure.core/rand][rand function]] returns a random floating point number from 0
+  (inclusive) to n (exclusive).
+- Here's the only looping construct in the entire ants program: it's
+  analogous to checking which compartment of the roulette wheel the
+  ball fell in. The =if= checks if =r= "fell into" the current
+  pocket - the size of which is given by =(slices i)=. If yes, return
+  the index corresponding to that pocket; if not, check the next
+  pocket/slice.
+
+*** Tying it all together: the =behave= function for ants
+The =behave= function below is the largest one, so it helps to keep in
+mind its main parts while diving into details:
+1. =let= values - help with readability.
+2. =Thread/sleep= - helps slow down ants in the UI display.
+3. =dosync= - ensures ants behavior is transactional, all-or-nothing.
+4. =if= branch: main logic for an ant, if ant has =:food= take it
+   home, otherwise look for food.
+
+Also, consider the context of how =behave= is first used: within the
+main invocation at the end, there's the expression:
+
+src_clojure{(dorun (map #(send-off % behave) ants))}
+
+So the =behave= function is called on every ant agent via the [[http://clojuredocs.org/clojure_core/clojure.core/send-off][send-off
+function]], which is how Clojure dispatches potentially blocking actions
+to agents. And there certainly are potentially blocking actions when
+using =behave=, since ants may try to move into the same cell, try to
+acquire the same food, etc.
+
+#+name ant-agent-behave
+#+BEGIN_SRC clojure :exports code :results silent :session s1 
+(defn behave 
+  "The main function for the ant agent."
+  [loc]
+  (let [p (place loc)
+        ant (:ant @p)
+        ahead (place (delta-location loc (:dir ant)))
+        ahead-left (place (delta-location loc (dec (:dir ant))))
+        ahead-right (place (delta-location loc (inc (:dir ant))))
+        places [ahead ahead-left ahead-right]]
+    ;; Old way of Java interop: (. Thread (sleep ant-sleep-ms))
+    ;; New idiomatic way is,
+    (Thread/sleep ant-sleep-ms)
+    (dosync
+     (when running
+       (send-off *agent* #'behave))
+     (if (:food ant)
+       ;; Then take food home:
+       (cond 
+        (:home @p)                              
+          (-> loc drop-food (turn 4))
+        (and (:home @ahead) (not (:ant @ahead))) 
+          (move loc)
+        :else
+          (let [ranks (merge-with + 
+                        (rank-by (comp #(if (:home %) 1 0) deref) places)
+                        (rank-by (comp :pher deref) places))]
+          (([move #(turn % -1) #(turn % 1)]
+            (wrand [(if (:ant @ahead) 0 (ranks ahead)) 
+                    (ranks ahead-left) (ranks ahead-right)]))
+           loc)))
+       ;; No food, go foraging:
+       (cond 
+        (and (pos? (:food @p)) (not (:home @p))) 
+          (-> loc take-food (turn 4))
+        (and (pos? (:food @ahead)) (not (:home @ahead)) (not (:ant @ahead)))
+          (move loc)
+        :else
+          (let [ranks (merge-with + 
+                                  (rank-by (comp :food deref) places)
+                                  (rank-by (comp :pher deref) places))]
+          (([move #(turn % -1) #(turn % 1)]
+            (wrand [(if (:ant @ahead) 0 (ranks ahead)) 
+                    (ranks ahead-left) (ranks ahead-right)]))
+           loc)))))))
+#+END_SRC
+
+**** The =let= values
+The =let= values: quite straightforward, just note the twist in how
+=behave= receives a cell/location as its argument, not an ant (which
+an OO-centric design might expect).
+
+**** The only JVM/concurrency leakage: =Thread/sleep=
+The src_clojure{(. Thread (sleep ant-sleep-ms))}, or
+src_clojure{(Thread/sleep ant-sleep-ms)} call is our first encounter
+with [[http://clojure.org/java_interop][Clojure's Java Interop]]. 
+- The first version uses [[http://clojure.org/java_interop#Java Interop-The Dot special form][the dot special form]] and in particular, the 
+  src_clojure{(. Classname-symbol (method-symbol args*))} format, with
+  =Thread= as the Classname-symbol, and =sleep= as the method-symbol.
+- However, outside of macros, the idiomatic form for accessing method
+  members is the second form, src_clojure{(Classname/staticMethod args*)}
+- Beyond syntax, the point of this expression is to slow down an ant
+  (one ant-agent per thread) between their movements, so you can see
+  in the UI what they're doing, and they'll appear more realistic. 
+But more interesting still: in this highly concurrent program, the
+=sleep= expression is about the *only explicit reference to threads*
+in the entire code, i.e. one of the very few "leaky abstractions"
+hinting at Clojure's use of underlying JVM concurrency constructs.
+Besides this call, there are no locks, and no explicit thread
+allocations.
+
+**** The main =dosync= call
+Next, let's look at what's going on within the =dosync= transaction.
+
+***** Repeating asynchronously, without looping
+The first expression is:
+
+src_clojure{(when running (send-off *agent* #'behave))}
+
+Initially this may seem strange; aren't we in the =behave= function
+because =send-off= already called it before entering it? Won't this
+just loop uselessly, not hitting the core =if= code below? Not quite:
+- Instead, =send-off= adds another execution of =behave= to the
+  current agent's *queue* of work/functions, and immediately returns.
+  - The current agent is referenced by the asterisk-surrounded
+    ~*agent*~ which Clojure dynamically binds to the current active
+    agent on a thread-local basis.
+- Thus after finishing this call of =behave= the ant will do another
+  action (execute =behave= again), and another, and so on. No explicit
+  looping, just *queue and repeat*.
+
+Also, note the ~#'~ sharp-quote, before =behave=; this is a Clojure
+Var, one of Clojure's mutable reference types. It's just syntactic
+sugar for =(var behave)=. Invoking a Var referring to a function is
+the same as invoking the function itself...so why bother with it?  I
+don't know; here's what I could find:
+- Besides Clojure docs, this SO thread also suggests there's no
+  difference, "Apply a =var= is the same as applying the value store
+  in the =var=."
+  http://stackoverflow.com/questions/9760480/in-clojure-difference-between-function-quoted-function-and-sharp-quote-functio
+- Maybe the #' prefix on =behave= causes the current thread's value
+  of the function (with the current ant/location) to be sent to the
+  queue? NO/unlikely. If it was mean to be a dynamic var, it would
+  have asterisks around it like =*agent*=.
+
+Why use =send-off= instead of =send= ?
+- [[http://stackoverflow.com/questions/1646351/what-is-the-difference-between-clojures-send-and-send-off-functions-with-re][send vs. send-off]] - =send= uses threadpool of fixed size which has
+  low switching overhead but blocking can dry up the threadpool. By
+  contrast, =send-off= uses a dynamic threadpool and blocking is
+  tolerated - and that's the right approach here as ant contention for
+  the same location/food can certainly cause (temporary) blocking.
+- http://stackoverflow.com/questions/5964997/clojure-agent-question-using-send-off
+
+***** Determining what the ant does next
+Finally, the ant's logic for what to do next is in the large =if=
+expression. The code looks dense but at the top level it's just a
+binary choice:
++ If the ant has food, take it home; the =cond= specifies 3
+  sub-cases: 
+  1. At a home cell, drop the food and turn around 180 degrees, to
+     exit home for more food.
+  2. If a home cell is ahead, move to it.
+  3. Otherwise, do a ranking of cells ahead (=places= has the cells
+     =ahead=, =ahead-left=, =ahead-right=) per presence of pheromones,
+     or home, and then randomly select from those 3 cells per their
+     ranking/weighting.
+
+** World behavior: pheromone evaporation
+#+BEGIN_SRC clojure :exports code :results silent :session s1 
+(defn evaporate 
+  "Causes all the pheromones to evaporate a bit."
+  []
+  (dorun 
+   (for [x (range dim) y (range dim)]
+     (dosync 
+      (let [p (place [x y])]
+        (alter p assoc :pher (* evap-rate (:pher @p))))))))
+#+END_SRC
+
+For a bit of realism and a cleaner UI/visual, it's useful to have the
+ants' pheromones diminish and evaporate from the world over time.
+The =evaporate= function fulfills that requirement: 
++ It takes no arguments, it will work over the entire world/board of
+  cells, accessed via the tuples of =x= and =y=.
++ The =[[http://clojuredocs.org/clojure_core/clojure.core/dorun][dorun]]= function takes a lazy collection/sequence (here, that of
+  the =for= expression) and forces the realization of that collection
+  for its side effects, discarding any returned values.
+  - It's unlike the similarly-named =doall= where we do care about the
+    values.
+  - And it's unlike =doseq=, which is like Clojure's =for= but runs
+    immediately and does not collect the results.
++ =dosync= is used as before, for lock-free updating of a =place=
+  cell.  Here, the desired side-effect/"mutation" is to update the
+  =:pher= value at the =place= cell with a lower number.  
+
+We'll see shortly that =evaporate= will run every second, a process
+that (like the ants) will be handled asynchronously using a Clojure
+agent.
+
+
+* The UI
+The user interface for the ants relies heavily on Clojure's Java
+inter-operation capabilities. But as we'll see, it's more than just
+wrapping calls to Java.
+
+** Using the Java AWT
+#+BEGIN_SRC clojure :exports code :results silent :session s1 
+(import 
+ '(java.awt Color Graphics Dimension)
+ '(java.awt.image BufferedImage)
+ '(javax.swing JPanel JFrame))
+#+END_SRC
+
+The =import= pulls in classes from [[http://docs.oracle.com/javase/6/docs/api/java/awt/package-summary.html][Java's Abstract Window Toolkit]]
+(AWT) package, and from the Java Swing package. (Aside: curious [[http://stackoverflow.com/questions/727844/javax-vs-java-package][why
+Swing is in the =javax= namespace]]?)  Assuming unfamiliarity with Java
+Swing, let's describe the classes used:
++ The =[[http://docs.oracle.com/javase/6/docs/api/java/awt/Color.html][Color]]= class encapsulates a color in the standard RGB color
+  space. In the code below, its usage as a constructor for a color
+  instance follows several arities:
+  - 4 integer arguments: r, g, b, and a for the alpha/transparency (0
+    transparent, 255 opaque)
+  - 3 integer arguments: r g b
+  - 1 argument: not a constructor call, but an access of a predefined
+    static =Color= field by name, returning the color in the RGB color
+    space.
++ The =[[http://docs.oracle.com/javase/6/docs/api/java/awt/Graphics.html][Graphics]]= class is an abstract base class for all graphics
+  contexts, i.e. a =Graphics= instance holds the current state data
+  needed for rendering it: the =[[http://docs.oracle.com/javase/6/docs/api/java/awt/Component.html][Component]]= object on which to draw,
+  the current clip, color, and font, etc. Below, we'll see that the
+  Clojure functions that take a =Graphics= instance as an argument:
+  - =fill-cell=
+  - =render-ant=
+  - =render-place=
+  - =render=
+  ...all do some kind of rendering/drawing.
++ The =[[http://docs.oracle.com/javase/6/docs/api/java/awt/Dimension.html][Dimension]]= class encapsulates the integer width and height of a
+  component. This class is used just once below, in setting the size
+  of the panel of the UI.
++ =[[http://docs.oracle.com/javase/6/docs/api/java/awt/image/BufferedImage.html][BufferedImage]]= class is needed for raster image data; below, the
+  =render= function uses it to paint the background panel.
++ The =[[http://docs.oracle.com/javase/1.4.2/docs/api/javax/swing/JPanel.html][JPanel]]= class is the generic "lightweight" UI container in Java
+  Swing (seems like the =div= element in HTML).  Below, it's used just
+  once for the main display.
++ The =[[http://docs.oracle.com/javase/1.4.2/docs/api/javax/swing/JFrame.html][JFrame]]= class creates a top-level window (w/ title and border)
+  in Swing; it's used just once below for the main ants UI window.
+
+** Functions to render the board and the ants
+Each discrete cell on the world board is a square matrix of pixels;
+with an odd number of pixels chosen, we can have a central position:
+#+BEGIN_SRC clojure :exports code :results silent :session s1 
+(def scale 5)  ; A world cell is 5x5 pixels.
+#+END_SRC
+
+By default, cells are empty; drawing cells having food or
+ant-deposited pheromones is done by filling with symbolic colors -
+here by running the Java methods =setColor= and =fillRect=:
+#+BEGIN_SRC clojure :exports code :results silent :session s1 
+(defn fill-cell [#^Graphics g x y c]
+  (doto g
+    (.setColor c)
+    (.fillRect (* x scale) (* y scale) scale scale)))
+#+END_SRC
+Note the use of the =[[http://clojuredocs.org/clojure_core/clojure.core/doto][doto]]= function here and in many places below: in
+Java, procedural mutation of a newly constructed instance is common
+for initialization. Clojure's =doto= function is meant to be more
+concise in specifying the target object just once, and then
+methods/setters acting on it and then returning it, implicitly.
+
+
+Drawing an ant: the graphical appearance of an ant is just a (5-pixel
+long) line pointing in one of the 8 cardinal directions, of two
+different colors (having food or not):
+#+BEGIN_SRC clojure :exports code :results silent :session s1 
+(defn render-ant [ant #^Graphics g x y]
+  (let [black (. (new Color 0 0 0 255) (getRGB))
+        gray (. (new Color 100 100 100 255) (getRGB))
+        red (. (new Color 255 0 0 255) (getRGB))
+        [hx hy tx ty] ({0 [2 0 2 4]  ; Up/North pointing
+                        1 [4 0 0 4] 
+                        2 [4 2 0 2] 
+                        3 [4 4 0 0] 
+                        4 [2 4 2 0]  ; Down/South 
+                        5 [0 4 4 0] 
+                        6 [0 2 4 2] 
+                        7 [0 0 4 4]}
+                       (:dir ant))]
+    (doto g
+      (.setColor (if (:food ant) 
+                  (new Color 255 0 0 255) 
+                  (new Color 0 0 0 255)))
+      (.drawLine (+ hx (* x scale)) (+ hy (* y scale)) 
+                (+ tx (* x scale)) (+ ty (* y scale))))))
+#+END_SRC
+Note the cleverly concise destructuring for the start and end drawing
+coordinates, needed in AWT's =[[http://docs.oracle.com/javase/1.4.2/docs/api/java/awt/Graphics.html#drawLine%28int,%20int,%20int,%20int%29][drawLine]]= method.
+
+
+If a cell in the ants' world is not empty, it has one or more of three
+things present: pheromone, food, or an ant.  The =render-place=
+function updates the cell's appearance accordingly:
+#+BEGIN_SRC clojure :exports code :results silent :session s1 
+(defn render-place [g p x y]
+  (when (pos? (:pher p))
+    (fill-cell g x y (new Color 0 255 0 
+                          (int (min 255 (* 255 (/ (:pher p) pher-scale)))))))
+  (when (pos? (:food p))
+    (fill-cell g x y (new Color 255 0 0 
+                          (int (min 255 (* 255 (/ (:food p) food-scale)))))))
+  (when (:ant p)
+    (render-ant (:ant p) g x y)))
+#+END_SRC
+
+
+Finally, the =render= function ties everything together: initializing
+the UI/window appearance by applying =render=place= to every cell, and
+also drawing the home space of the ants.  Note the heavy usage of the
+dot special form: the UI code relies heavily on Java, though Clojure's
+=for= and =doto= help us avoid Java boilerplate and stay concise:
+#+BEGIN_SRC clojure :exports code :results silent :session s1 
+(defn render [g]
+  (let [v (dosync (apply vector (for [x (range dim) y (range dim)] 
+                                   @(place [x y]))))
+        img (new BufferedImage (* scale dim) (* scale dim) 
+                 (. BufferedImage TYPE_INT_ARGB))
+        bg (. img (getGraphics))]
+    ;; First paint everything white, on the bg instance:
+    (doto bg
+      (.setColor (. Color white))
+      (.fillRect 0 0 (. img (getWidth)) (. img (getHeight))))
+    (dorun 
+     (for [x (range dim) y (range dim)]
+       (render-place bg (v (+ (* x dim) y)) x y)))
+    ;; Draw the home space of the ants:
+    (doto bg
+      (.setColor (. Color blue))
+      (.drawRect (* scale home-offset) (* scale home-offset) 
+                 (* scale nants-sqrt) (* scale nants-sqrt)))
+    (. g (drawImage img 0 0 nil))
+    (. bg (dispose))))  ; Finished using Graphics object, release it.
+#+END_SRC
+
+** Setting the scene, then updating it continually
+Almost ready to begin our simulation; we need to setup some additional
+elements per AWT conventions: the main UI =panel= where visual changes
+take place, the top-level window =frame=, and an =animator= agent that
+continually updates the visual elements:
+#+BEGIN_SRC clojure :exports code :results silent :session s1 
+(def panel (doto 
+             (proxy [JPanel] [] (paint [g] (render g)))
+             (.setPreferredSize (new Dimension 
+                                     (* scale dim) 
+                                     (* scale dim)))))
+
+(def frame (doto (new JFrame) (.add panel) .pack .show))
+
+(def animator (agent nil))
+#+END_SRC
+
+*** Animation, panel-by-panel
+Now for bringing the static starting "picture" to life - like the
+cartoons of old, the =animation= function will "draw" the next state
+of the main panel displaying the ants.  Below, Hickey uses the
+queue-itself-then-run, again-and-again code pattern we've seen before
+(above, in updating an ant's state):
+#+BEGIN_SRC clojure :exports code :results silent :session s1 
+(defn animation [x]
+  (when running
+    (send-off *agent* #'animation))
+  (. panel (repaint))
+  (. Thread (sleep animation-sleep-ms))
+  nil)
+#+END_SRC
+
+Finally, we need another agent to handle one more time-track of
+changes: evaporation, using the =evaporate= function defined above.
+#+BEGIN_SRC clojure :exports code :results silent :session s1 
+(def evaporator (agent nil))
+
+(defn evaporation [x]
+  (when running
+    (send-off *agent* #'evaporation))
+  (evaporate)
+  (. Thread (sleep evap-sleep-ms))
+  nil)
+#+END_SRC
+
+
+* Running the Program
+** The =project.clj= file
+When you tangle this file, the local =project.clj= file will be
+created alongside =ants.clj=.  Assuming you've installed the excellent
+[[http://leiningen.org/][Leiningen]], you'd then:
+1. Enter =lein deps= at the shell prompt to get dependencies.
+2. Then you can start a REPL with =lein repl=, from which you can
+   start the simulator (see next section).
+
+#+BEGIN_SRC clojure :tangle project.clj
+(defproject literate-ants "1.0.0-SNAPSHOT"
+  :description "This is a literate version of: Rich Hickey's Ants simulator, demonstrating Clojure's concurrency support."
+  :dev-dependencies []
+  :dependencies [[org.clojure/clojure "1.5.1"]]
+  )
+#+END_SRC
+
+** Running the simulator
+At the REPL, you can enter the entire =do= expression below, or try
+each line within it separately:
+#+BEGIN_SRC clojure :tangle no
+(do 
+  (load-file "./literate-ants.clj")
+  (def ants (setup))
+  (send-off animator animation)
+  (dorun (map #(send-off % behave) ants))
+  (send-off evaporator evaporation))
+#+END_SRC
+Either way you'll see a new window appear with a white background,
+blue square representing the ants' home, red squares of food, black or
+red (w/ food) moving lines representing each ant, and green squares
+for pheromones in various concentrations.  A lot happening
+concurrently, with no locks, and beautifully concise code - welcome to
+Clojure!
+
+
+** Unused                                                 :ARCHIVE:NOEXPORT:
+#+BEGIN_SRC clojure :exports code :results silent :session s1 :tangle no
+(comment
+;demo
+(load-file "/Users/rich/dev/clojure/ants.clj")
+(def ants (setup))
+(send-off animator animation)
+(dorun (map #(send-off % behave) ants))
+(send-off evaporator evaporation)
+)
+#+END_SRC
+
+
+#+name: ants
+#+BEGIN_SRC clojure :tangle no :exports none :noweb yes
+<<sim-world-setup>>
+
+<<sim-world-board-creation>>
+
+<<ants-defined>>
+#+end_src
