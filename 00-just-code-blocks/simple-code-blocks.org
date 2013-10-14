@@ -1,0 +1,47 @@
+#+TITLE: Simple Code Blocks - a Literate Programming File
+#+AUTHOR: Kai Wu
+#+EMAIL: k@limist.com
+#+LANGUAGE: en
+#+STARTUP: align hidestars lognotestate
+
+
+* Introduction
+This file just shows simple usage of code blocks in Org mode; unlike
+later examples, there are no Org =:tangle= file locations used here.
+Instead, we just show how easy and convenient it is to mix structured
+prose/markup with code blocks.
+
+
+* 4Clojure problem 42 , [[http://www.4clojure.com/problem/42][Factorial Fun]] - first solved [2012-05-23 Wed]
+Write a function which calculates factorials.
+
+** My solution, <1 minute: reduce w/ range
+#+BEGIN_SRC clojure
+#(reduce * (range 1 (inc %)))
+#+END_SRC
+
+** Other solutions: =reduce=, or use =apply= with =range=
+#+BEGIN_SRC clojure
+;; maximental's solution:
+#(apply * % (range 2 %))
+
+
+;; daowen's solution:
+#(apply * (range 1 (inc %)))
+
+
+;; redraiment's solution:
+#(apply * % (range 1 %))
+
+
+;; sheldon's solution:
+#(loop [x % r 1] (if (= x 1) r (recur (dec x) (* r x))))
+
+
+;; vyzamyatin's solution:
+#(reduce * (range 1 (inc %)))
+
+
+;; amcnamara's solution:
+#(apply * (range 1 (inc %)))
+#+END_SRC
