@@ -26,6 +26,7 @@
 
 
 * Main application
+** Behavior
 #+BEGIN_SRC clojure :tangle app/src/skeleton_app/behavior.clj
 (ns ^:shared skeleton-app.behavior
     (:require [clojure.string :as string]
@@ -110,7 +111,7 @@
   )
 #+END_SRC
 
-
+** HTML templates
 #+BEGIN_SRC clojure :tangle app/src/skeleton_app/html_templates.clj
 (ns skeleton-app.html-templates
   (:use [io.pedestal.app.templates :only [tfn dtfn tnodes]]))
@@ -133,7 +134,7 @@
 ;; Note: this file will not be reloaded automatically when it is changed.
 #+END_SRC
 
-
+** Rendering
 #+BEGIN_SRC clojurescript :tangle app/src/skeleton_app/rendering.cljs
 (ns skeleton-app.rendering
   (:require [domina :as dom]
@@ -210,7 +211,7 @@
 ;; elements.
 #+END_SRC
 
-
+** Back-end/external communications
 #+BEGIN_SRC clojurescript :tangle app/src/skeleton_app/services.cljs
 (ns skeleton-app.services)
 
@@ -250,7 +251,7 @@
 ;;
 #+END_SRC
 
-
+** Start
 #+BEGIN_SRC clojurescript :tangle app/src/skeleton_app/start.cljs
 (ns skeleton-app.start
   (:require [io.pedestal.app.protocols :as p]
@@ -309,7 +310,7 @@
 
 #+END_SRC
 
-** simulated back-end
+** Simulated back-end
 #+BEGIN_SRC clojurescript :tangle app/src/skeleton_app/simulated/services.cljs
 (ns skeleton-app.simulated.services)
 
