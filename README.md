@@ -8,7 +8,7 @@ Prerequisites
 =============
 
 1. A recent version of Emacs, 24.3+.
-2. Both =org-mode= (included w/ Emacs 24+) and =clojure-mode= installed;
+2. Both `org-mode` (included w/ Emacs 24+) and `clojure-mode` installed;
    use Emacs ELPA as needed.
    - Consider using an Emacs "starter package" that provides a good
      baseline, like [Emacs Prelude](http://batsov.com/prelude/) or [Emacs Live](http://overtone.github.io/emacs-live/).
