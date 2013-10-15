@@ -96,7 +96,7 @@ into documentation, or /tangled/ to code.
 
 
 * Project meta
-** Project definition, =project.clj=
+** Project definition
 #+BEGIN_SRC clojure :tangle project.clj
 (defproject skeleton-app "0.1.0-SNAPSHOT"
   :description "FIXME: write description"
@@ -152,7 +152,7 @@ your option) any later version.
 #+END_SRC
 
 ** License notice
-#+BEGIN_SRC :tangle LICENSE
+#+BEGIN_SRC text :tangle LICENSE
 THE ACCOMPANYING PROGRAM IS PROVIDED UNDER THE TERMS OF THIS ECLIPSE PUBLIC
 LICENSE ("AGREEMENT"). ANY USE, REPRODUCTION OR DISTRIBUTION OF THE PROGRAM
 CONSTITUTES RECIPIENT'S ACCEPTANCE OF THIS AGREEMENT.
@@ -374,11 +374,22 @@ in any resulting litigation.
 ** The user-story
 Max touches the GO button using this app, and justly rebuilds the
 world with Clojure.
+** Non-user-visible requirements
+1. Logging
+2. Security
 
 
 * Architecture
 1. Foo back-end
 2. Bar front-end
+   - Probably use a Pedestal App client
+
+
+| Part | Description                 | Alternatives  |
+|------+-----------------------------+---------------|
+| Foo  | Foo has the data we worship |               |
+| Bar  | Bar presents via D3 charts  | Flash? Nein!! |
+|      |                             |               |
 
 
 * Design
@@ -391,6 +402,7 @@ The default =lein new app *= command just produces two files with
 actual Clojure code.
 
 ** core
+#+NAME: core
 #+BEGIN_SRC clojure :tangle src/skeleton_app/core.clj
 (ns skeleton-app.core
   (:gen-class))
