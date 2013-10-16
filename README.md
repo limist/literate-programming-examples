@@ -17,24 +17,24 @@ Prerequisites
 1. Install recent version of Emacs, 24.3+.
 2. Install both `org-mode` (older version should be included w/ Emacs
    24+) and `clojure-mode`.  Use Emacs ELPA as needed (it can also
-   upgrade Emacs packages); you can invoke that from Emacs with =M-x
-   package-list-packages=.
+   upgrade Emacs packages); you can invoke that from Emacs with
+   `M-x package-list-packages`
    - Consider using an Emacs "starter package" that provides a good
      baseline configuration, like
      [Emacs Prelude](http://batsov.com/prelude/) or
      [Emacs Live](http://overtone.github.io/emacs-live/).  Both those
      packages choose reasonable/good default configurations, and
      support Clojure (other languages too).
-3. Updated your =.emacs= file to support Org's LP features for Clojure
+3. Updated your `.emacs` file to support Org's LP features for Clojure
    (and possibly other languages). 
    - The exact location and name varies (depending on whether you
      chose one of the starter packages mentioned), e.g. with Emacs
      Prelude you'd have a file like
-     =~/.emacs.d/personal/yourUsername.el=
-   - You'll need to add the following somewhere within the =.emacs=;
-     note that emacs-lisp is optional, just meant to show that
-     supporting additional languages is easy:
-```elisp
+     `~/.emacs.d/personal/yourUsername.el`
+   - You'll need to add the following somewhere within the `.emacs`;
+     note that the `emacs-lisp` line below is optional, it's just
+     meant to show that supporting additional languages is easy:
+```
 (org-babel-do-load-languages
   'org-babel-load-languages
   '((emacs-lisp . t)
@@ -89,6 +89,6 @@ The benefits of LP using Emacs + Org
 More information
 ================
 
-- Emacs: no flamebait here; I will just say that having Org alone is sufficient reason to use the Eternal Editor.
+- Emacs: no flamebait here; I will just say that having Org is sufficient reason to use the Eternal Editor.
 - [Org documentation](http://orgmode.org/org.html), especially the section on [Working with source code](http://orgmode.org/org.html#Working-With-Source-Code)
 - The excellent paper by Schulte and Davison, [Active Documents with Org-Mode](http://www.cs.unm.edu/~eschulte/data/CISE-13-3-SciProg.pdf)
