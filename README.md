@@ -34,16 +34,17 @@ Prerequisites
    - You'll need to add the following somewhere within the `.emacs`;
      note that the `emacs-lisp` line below is optional, it's just
      meant to show that supporting additional languages is easy:
-```
-(org-babel-do-load-languages
-  'org-babel-load-languages
-  '((emacs-lisp . t)
-    (clojure . t)))
-;; Show syntax highlighting per language native mode in *.org
-(setq org-src-fontify-natively t)
-;; For languages with significant whitespace like Python:
-(setq org-src-preserve-indentation t))
-```
+
+     ```
+     (org-babel-do-load-languages
+       'org-babel-load-languages
+       '((emacs-lisp . t)
+         (clojure . t)))
+     ;; Show syntax highlighting per language native mode in *.org
+     (setq org-src-fontify-natively t)
+     ;; For languages with significant whitespace like Python:
+     (setq org-src-preserve-indentation t))
+     ```
 
 
 The benefits of LP using Emacs + Org
