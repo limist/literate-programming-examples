@@ -3,10 +3,10 @@ Literate Programming Examples
 
 This repository is a collection of literate programming (LP) examples,
 using Emacs [Org mode](http://orgmode.org), which I contend is the
-most powerful yet simple LP platform available today.
+most powerful yet simplest LP platform available today.
 
-The intention is for these examples to be directly usable (copy and
-start hacking), and/or to serve as educational literate programs.  The
+These examples are intended to be directly usable (copy and start
+hacking), and/or to serve as educational literate programs.  The
 long-term goal is to collect and organize a corpus of useful LP
 examples that point towards Knuth's vision of programs-as-literature.
 
@@ -50,32 +50,36 @@ Prerequisites
 The benefits of LP using Emacs + Org
 ====================================
 
-1. Docs matter, a lot. With LP, documentation is integral to
-   development, never an afterthought.
+1. Docs matter, a lot - for starters, do you judge a Github project by
+   its README?. With literate programming, documentation is integral
+   to development, never an afterthought.
    - For all but small throwaway systems, you're likely keeping a
      separate file of development notes already; LP would integrate
      that.
 2. With one LP file, you avoid the incidental/inessential complexity
    of the filesystem, by avoiding frequent context-switching overhead
-   moving between files, and sidestep your language's imposed
+   moving between files.  And you sidestep your language's imposed
    filesystem structure.
 3. Org rocks for prose:
-   - Org's plain-text **markup is lightweight**, yet more powerful than
-     Markdown, and cleaner than rST.
+   - Org's plain-text **markup is lightweight**, yet more powerful
+     than Markdown (which lacks hierarchical structuring), and cleaner
+     than rST.
    - The **structural editing** provided by Org documents lets you
      organize your thoughts/writing/code very quickly.  With good
      structure even major revisions are easy.
    - Org's exporter lets your **write-once, express-many-times**: you
      can export an Org file to HTML (e.g. for blogging) or LaTeX (for
-     serious publishing).
+     serious publishing) and PDF.
    - It's easy to version-control Org files; it's just plain-text.
 4. Org rocks for code:
    - Each code block has flexible granularity: can be named and
      referred to; evaluated or not; have data sent in or exported;
      specify different REPL sessions; specify different target/tangled
-     files.
+     files (in arbitrary subdirectories).
    - Code blocks are syntax-highlighted.
-   - Code blocks are ready to edit: jump to major-mode editing easily.
+   - Code blocks are ready to edit: jump to major-mode editing easily;
+     edit/REPL as usual; changes will flow back to the containing Org
+     file.
    - A single Org file can mix multiple languages together.
 5. Meta-development, manage complexity from a coherent perspective: a
    unified, single-file approach encourages holistic software
@@ -90,6 +94,7 @@ The benefits of LP using Emacs + Org
 More information
 ================
 
-- Emacs: no flamebait here; I will just say that having Org is sufficient reason to use the Eternal Editor.
+- Emacs: no flamebait here; I will just say that having Org is
+  sufficient reason to use the Eternal Editor.
 - [Org documentation](http://orgmode.org/org.html), especially the section on [Working with source code](http://orgmode.org/org.html#Working-With-Source-Code)
 - The excellent paper by Schulte and Davison, [Active Documents with Org-Mode](http://www.cs.unm.edu/~eschulte/data/CISE-13-3-SciProg.pdf)
