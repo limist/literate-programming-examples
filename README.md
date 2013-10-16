@@ -14,7 +14,7 @@ examples that point towards Knuth's vision of programs-as-literature.
 Prerequisites
 =============
 
-1. Install recent version of Emacs, 24.3+.
+1. Install a recent version of Emacs, 24.3+.
 2. Install both `org-mode` (older version should be included w/ Emacs
    24+) and `clojure-mode`.  Use Emacs ELPA as needed (it can also
    upgrade Emacs packages); you can invoke that from Emacs with
@@ -25,10 +25,10 @@ Prerequisites
      [Emacs Live](http://overtone.github.io/emacs-live/).  Both those
      packages choose reasonable/good default configurations, and
      support Clojure (other languages too).
-3. Updated your `.emacs` file to support Org's LP features for Clojure
+3. Update your `.emacs` file to support Org's LP features for Clojure
    (and possibly other languages). 
-   - The exact location and name varies (depending on whether you
-     chose one of the starter packages mentioned), e.g. with Emacs
+   - The exact location and name varies, depending on whether you
+     chose one of the starter packages mentioned; e.g. with Emacs
      Prelude you'd have a file like
      `~/.emacs.d/personal/yourUsername.el`
    - You'll need to add the following somewhere within the `.emacs`;
