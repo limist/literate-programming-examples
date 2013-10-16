@@ -4,7 +4,9 @@ Literate Programming Examples
 A literate program combines code and prose (documentation) in one file
 format. The term was coined by Donald Knuth in his September 1983
 paper, *Literate Programming*,
-[available online](http://literateprogramming.com/knuthweb.pdf). [Knuth asserts that literate programming](http://www.informit.com/articles/article.aspx?p=1193856):
+[available online](http://literateprogramming.com/knuthweb.pdf). Decades
+later,
+[Knuth asserts that literate programming](http://www.informit.com/articles/article.aspx?p=1193856):
 
 1. Was the most important outcome of creating TeX.
 2. Enables faster and more reliable creation of software.
@@ -14,8 +16,9 @@ paper, *Literate Programming*,
 
 Can these claims be made by non-Knuth programmers who adopt literate
 programming (LP) for themselves? I believe the time is ripe to find
-out, as we finally have a tool that is powerful yet simple, with
-mature LP capabilities: Emacs [Org mode](http://orgmode.org).
+out, as we finally have a tool that is simple (plain text), flexible,
+and powerful, with mature LP capabilities:
+[Emacs Org mode](http://orgmode.org).
 
 Thus this repository is a collection of literate programming (LP)
 examples, using Emacs Org mode.  These examples are intended to be
