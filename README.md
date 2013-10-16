@@ -50,24 +50,28 @@ Prerequisites
 The benefits of LP using Emacs + Org
 ====================================
 
-1. Docs matter, a lot - for starters, do you judge a Github project by
-   its README?. With literate programming, documentation is integral
-   to development, never an afterthought.
+1. Documentation matters, a lot.
+   - For starters, do you judge a Github project by its README?
    - For all but small throwaway systems, you're likely keeping a
      separate file of development notes already; LP would integrate
      that.
+   - No matter how clear the function and data names are, code itself
+     rarely clarifies larger issues of architecture and design, and
+     the decision histories therein.
+   - With literate programming, documentation is integral to
+     development, never an afterthought.
 2. With one LP file, you avoid the incidental/inessential complexity
-   of the filesystem, by avoiding frequent context-switching overhead
-   moving between files.  And you sidestep your language's imposed
-   filesystem structure.
+   of the filesystem, by avoiding the frequent context-switching
+   overhead in moving between files.  And you sidestep your language's
+   imposed filesystem structure.
 3. Org rocks for prose:
-   - Org's plain-text **markup is lightweight**, yet more powerful
-     than Markdown (which lacks hierarchical structuring), and cleaner
-     than rST.
-   - The **structural editing** provided by Org documents lets you
+   - Org's plain-text markup is lightweight, yet more powerful than
+     Markdown (which lacks hierarchical structuring), and cleaner than
+     rST.
+   - The structural editing provided by Org documents lets you
      organize your thoughts/writing/code very quickly.  With good
      structure even major revisions are easy.
-   - Org's exporter lets your **write-once, express-many-times**: you
+   - Org's exporter lets your write-once, express-many-times: you
      can export an Org file to HTML (e.g. for blogging) or LaTeX (for
      serious publishing) and PDF.
    - It's easy to version-control Org files; it's just plain-text.
@@ -95,6 +99,10 @@ More information
 ================
 
 - Emacs: no flamebait here; I will just say that having Org is
-  sufficient reason to use the Eternal Editor.
-- [Org documentation](http://orgmode.org/org.html), especially the section on [Working with source code](http://orgmode.org/org.html#Working-With-Source-Code)
-- The excellent paper by Schulte and Davison, [Active Documents with Org-Mode](http://www.cs.unm.edu/~eschulte/data/CISE-13-3-SciProg.pdf)
+  sufficient reason to use the Eternal Editor.  Just be sure to remap
+  your CapsLock to Control, for happy hands.
+- [Org documentation](http://orgmode.org/org.html), especially the
+  section on
+  [Working with source code](http://orgmode.org/org.html#Working-With-Source-Code)
+- The excellent paper by Schulte and Davison,
+  [Active Documents with Org-Mode](http://www.cs.unm.edu/~eschulte/data/CISE-13-3-SciProg.pdf)
