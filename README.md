@@ -35,7 +35,7 @@ Prerequisites
      note that the `emacs-lisp` line below is optional, it's just
      meant to show that supporting additional languages is easy:
 
-     ```
+     ```elisp
      (org-babel-do-load-languages
        'org-babel-load-languages
        '((emacs-lisp . t)
