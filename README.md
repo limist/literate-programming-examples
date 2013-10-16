@@ -98,9 +98,10 @@ The benefits of LP using Emacs + Org
 More information
 ================
 
-- Emacs: no flamebait here; I will just say that having Org is
-  sufficient reason to use the Eternal Editor.  Just be sure to remap
-  your CapsLock to Control, for happy hands.
+- Emacs: no flamebait here; I will simply say that having Org is
+  sufficient reason to use the Eternal Editor.  Just be sure to
+  [remap your CapsLock to Control](http://www.emacswiki.org/emacs/MovingTheCtrlKey),
+  for happy hands.
 - [Org documentation](http://orgmode.org/org.html), especially the
   section on
   [Working with source code](http://orgmode.org/org.html#Working-With-Source-Code)
