@@ -9,12 +9,14 @@ This is a literate programming (LP) file for a Pedestal Service
 (back-end, multi-thread per HTTP request), in Emacs Org mode format.
 To start building your Service, you'd likely begin by doing
 search-and-replace to update the default names of "mysvc" below; then
-save this LP file to the top-level of your project directory.
+save this LP file to the top-level of your project directory.  NOTE
+that the :tangle paths specified below assume this LP file sits above
+(not in) the directory containing the Pedestal Service; if that's not
+what you want, drop the leading "mysvc/" in the :tangle paths.
 
 
-* Mysvc server
-** Project meta
-*** Leiningen configuration
+* Project meta
+** Leiningen configuration
 #+BEGIN_SRC clojure :tangle mysvc/project.clj
 (defproject mysvc "0.0.1-SNAPSHOT"
   :description "FIXME: write description"
@@ -48,7 +50,7 @@ save this LP file to the top-level of your project directory.
 
 #+END_SRC
 
-*** README
+** README
 #+BEGIN_SRC markdown :tangle mysvc/README.md
 # mysvc
 
@@ -73,13 +75,13 @@ To learn more about configuring Logback, read its [documentation](http://logback
 
 #+END_SRC
 
-*** User/REPL configuration
+** User/REPL configuration
 #+BEGIN_SRC clojure :tangle mysvc/config/user.clj
 ;; Empty file to permit project.clj :repl-options {:init user} to work
 
 #+END_SRC
 
-*** Logback configuration
+** Logback configuration
 #+BEGIN_SRC xml :tangle mysvc/config/logback.xml
 <!-- Logback configuration. See http://logback.qos.ch/manual/index.html -->
 <configuration scan="true" scanPeriod="10 seconds">
@@ -136,8 +138,9 @@ To learn more about configuring Logback, read its [documentation](http://logback
 
 #+END_SRC
 
-** Code and tests
-*** The web service
+
+* Code and tests
+** The web service
 #+BEGIN_SRC clojure :tangle mysvc/src/mysvc/service.clj
 (ns mysvc.service
     (:require [io.pedestal.service.http :as bootstrap]
@@ -191,7 +194,7 @@ To learn more about configuring Logback, read its [documentation](http://logback
 
 #+END_SRC
 
-**** Tests
+*** Tests
 #+BEGIN_SRC clojure :tangle mysvc/test/mysvc/service_test.clj
 (ns mysvc.service-test
   (:require [clojure.test :refer :all]
@@ -220,7 +223,7 @@ To learn more about configuring Logback, read its [documentation](http://logback
 
 #+END_SRC
 
-*** Server/servlet definition
+** Server/servlet definition
 #+BEGIN_SRC clojure :tangle mysvc/src/mysvc/server.clj
 (ns mysvc.server
   (:gen-class) ; for -main method in uberjar
