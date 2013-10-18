@@ -1,0 +1,258 @@
+#+TITLE: Pedestal Service, in Org literate programming form
+#+AUTHOR: Kai Wu
+#+EMAIL: k@limist.com
+#+STARTUP: overview hidestars
+#+PROPERTY: mkdirp yes
+
+
+This is a literate programming (LP) file for a Pedestal Service
+(back-end, multi-thread per HTTP request), in Emacs Org mode format.
+To start building your Service, you'd likely begin by doing
+search-and-replace to update the default names of "mysvc" below; then
+save this LP file to the top-level of your project directory.
+
+
+* Mysvc server
+** Project meta
+*** Leiningen configuration
+#+BEGIN_SRC clojure :tangle mysvc/project.clj
+(defproject mysvc "0.0.1-SNAPSHOT"
+  :description "FIXME: write description"
+  :url "http://example.com/FIXME"
+  :license {:name "Eclipse Public License"
+            :url "http://www.eclipse.org/legal/epl-v10.html"}
+  :dependencies [[org.clojure/clojure "1.5.1"]
+                 [io.pedestal/pedestal.service "0.2.1"]
+                 [io.pedestal/pedestal.service-tools "0.2.1"]
+
+                 ;; Remove this line and uncomment the next line to
+                 ;; use Tomcat instead of Jetty:
+                 [io.pedestal/pedestal.jetty "0.2.1"]
+                 ;; [io.pedestal/pedestal.tomcat "0.2.1"]
+                 ]
+  :min-lein-version "2.0.0"
+  :resource-paths ["config", "resources"]
+  :aliases {"run-dev" ["trampoline" "run" "-m" "mysvc.server/run-dev"]}
+  :repl-options  {:init-ns user
+                  :init (try
+                          (use 'io.pedestal.service-tools.dev)
+                          (require 'mysvc.service)
+                          ;; Nasty trick to get around being unable to reference non-clojure.core symbols in :init
+                          (eval '(init mysvc.service/service #'mysvc.service/routes))
+                          (catch Throwable t
+                            (println "ERROR: There was a problem loading io.pedestal.service-tools.dev")
+                            (clojure.stacktrace/print-stack-trace t)
+                            (println)))
+                  :welcome (println "Welcome to pedestal-service! Run (tools-help) to see a list of useful functions.")}
+  :main ^{:skip-aot true} mysvc.server)
+
+#+END_SRC
+
+*** README
+#+BEGIN_SRC markdown :tangle mysvc/README.md
+# mysvc
+
+FIXME
+
+## Getting Started
+
+1. Start the application: `lein run`
+2. Go to [localhost:8080](http://localhost:8080/) to see: `Hello World!`
+3. Read your app's source code at src/mysvc/service.clj. Explore the docs of functions
+   that define routes and responses.
+4. Run your app's tests with `lein test`. Read the tests at test/mysvc/service_test.clj.
+5. Learn more! See the [Links section below](#links).
+
+## Configuration
+
+To configure logging see config/logback.xml. By default, the app logs to stdout and logs/.
+To learn more about configuring Logback, read its [documentation](http://logback.qos.ch/documentation.html).
+
+## Links
+- [Other examples](https://github.com/pedestal/samples)
+
+#+END_SRC
+
+*** User/REPL configuration
+#+BEGIN_SRC clojure :tangle mysvc/config/user.clj
+;; Empty file to permit project.clj :repl-options {:init user} to work
+
+#+END_SRC
+
+*** Logback configuration
+#+BEGIN_SRC xml :tangle mysvc/config/logback.xml
+<!-- Logback configuration. See http://logback.qos.ch/manual/index.html -->
+<configuration scan="true" scanPeriod="10 seconds">
+
+  <!-- Simple file output -->
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <!-- encoder defaults to ch.qos.logback.classic.encoder.PatternLayoutEncoder -->
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <!-- rollover daily -->
+      <fileNamePattern>logs/mysvc-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+      <timeBasedFileNamingAndTriggeringPolicy
+          class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+        <!-- or whenever the file size reaches 64 MB -->
+        <maxFileSize>64 MB</maxFileSize>
+      </timeBasedFileNamingAndTriggeringPolicy>
+    </rollingPolicy>
+
+    <!-- Safely log to the same file from multiple JVMs. Degrades performance! -->
+    <prudent>true</prudent>
+  </appender>
+
+
+  <!-- Console output -->
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <!-- encoder defaults to ch.qos.logback.classic.encoder.PatternLayoutEncoder -->
+    <encoder>
+      <pattern>%-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+    <!-- Only log level INFO and above -->
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>INFO</level>
+    </filter>
+  </appender>
+
+
+  <!-- Enable FILE and STDOUT appenders for all log messages.
+       By default, only log at level INFO and above. -->
+  <root level="INFO">
+    <appender-ref ref="FILE" />
+    <appender-ref ref="STDOUT" />
+  </root>
+
+  <!-- For loggers in the these namespaces, log at all levels. -->
+  <logger name="user" level="ALL" />
+  <!-- To log pedestal internals, enable this and change ThresholdFilter to DEBUG
+    <logger name="pedestal" level="ALL" />
+  -->
+
+</configuration>
+
+#+END_SRC
+
+** Code and tests
+*** The web service
+#+BEGIN_SRC clojure :tangle mysvc/src/mysvc/service.clj
+(ns mysvc.service
+    (:require [io.pedestal.service.http :as bootstrap]
+              [io.pedestal.service.http.route :as route]
+              [io.pedestal.service.http.body-params :as body-params]
+              [io.pedestal.service.http.route.definition :refer [defroutes]]
+              [ring.util.response :as ring-resp]))
+
+(defn about-page
+  [request]
+  (ring-resp/response (format "Clojure %s" (clojure-version))))
+
+(defn home-page
+  [request]
+  (ring-resp/response "Hello World!"))
+
+(defroutes routes
+  [[["/" {:get home-page}
+     ;; Set default interceptors for /about and any other paths under /
+     ^:interceptors [(body-params/body-params) bootstrap/html-body]
+     ["/about" {:get about-page}]]]])
+
+;; You can use this fn or a per-request fn via io.pedestal.service.http.route/url-for
+(def url-for (route/url-for-routes routes))
+
+;; Consumed by mysvc.server/create-server
+(def service {:env :prod
+              ;; You can bring your own non-default interceptors. Make
+              ;; sure you include routing and set it up right for
+              ;; dev-mode. If you do, many other keys for configuring
+              ;; default interceptors will be ignored.
+              ;; :bootstrap/interceptors []
+              ::bootstrap/routes routes
+
+              ;; Uncomment next line to enable CORS support, add
+              ;; string(s) specifying scheme, host and port for
+              ;; allowed source(s):
+              ;;
+              ;; "http://localhost:8080"
+              ;;
+              ;;::bootstrap/allowed-origins ["scheme://host:port"]
+
+              ;; Root for resource interceptor that is available by default.
+              ::bootstrap/resource-path "/public"
+
+              ;; Either :jetty or :tomcat (see comments in project.clj
+              ;; to enable Tomcat)
+              ;;::bootstrap/host "localhost"
+              ::bootstrap/type :jetty
+              ::bootstrap/port 8080})
+
+#+END_SRC
+
+**** Tests
+#+BEGIN_SRC clojure :tangle mysvc/test/mysvc/service_test.clj
+(ns mysvc.service-test
+  (:require [clojure.test :refer :all]
+            [io.pedestal.service.test :refer :all]
+            [io.pedestal.service.http :as bootstrap]
+            [mysvc.service :as service]))
+
+(def service
+  (::bootstrap/service-fn (bootstrap/create-servlet service/service)))
+
+(deftest home-page-test
+  (is (=
+       (:body (response-for service :get "/"))
+       "Hello World!"))
+  (is (=
+       (:headers (response-for service :get "/"))
+       {"Content-Type" "text/html;charset=UTF-8"})))
+
+(deftest about-page-test
+  (is (.contains
+       (:body (response-for service :get "/about"))
+       "Clojure 1.5"))
+  (is (=
+       (:headers (response-for service :get "/about"))
+       {"Content-Type" "text/html;charset=UTF-8"})))
+
+#+END_SRC
+
+*** Server/servlet definition
+#+BEGIN_SRC clojure :tangle mysvc/src/mysvc/server.clj
+(ns mysvc.server
+  (:gen-class) ; for -main method in uberjar
+  (:require [io.pedestal.service-tools.server :as server]
+            [mysvc.service :as service]
+            [io.pedestal.service-tools.dev :as dev]))
+
+(defn run-dev
+  "The entry-point for 'lein run-dev'"
+  [& args]
+  (dev/init service/service #'service/routes)
+  (apply dev/-main args))
+
+;; To implement your own server, copy io.pedestal.service-tools.server and
+;; customize it.
+
+(defn -main
+  "The entry-point for 'lein run'"
+  [& args]
+  (server/init service/service)
+  (apply server/-main args))
+
+;; Fns for use with io.pedestal.servlet.ClojureVarServlet
+
+(defn servlet-init [this config]
+  (server/init service/service)
+  (server/servlet-init this config))
+
+(defn servlet-destroy [this]
+  (server/servlet-destroy this))
+
+(defn servlet-service [this servlet-req servlet-resp]
+  (server/servlet-service this servlet-req servlet-resp))
+
+#+END_SRC
