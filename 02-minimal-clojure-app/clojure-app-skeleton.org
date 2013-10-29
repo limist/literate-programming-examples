@@ -374,6 +374,7 @@ in any resulting litigation.
 ** The user-story
 Max touches the GO button using this app, and justly rebuilds the
 world with Clojure.
+
 ** Non-user-visible requirements
 1. Logging
 2. Security
@@ -387,8 +388,8 @@ world with Clojure.
 
 | Part | Description                 | Alternatives  |
 |------+-----------------------------+---------------|
-| Foo  | Foo has the data we worship |               |
 | Bar  | Bar presents via D3 charts  | Flash? Nein!! |
+| Foo  | Foo has the data we worship |               |
 |      |                             |               |
 
 
