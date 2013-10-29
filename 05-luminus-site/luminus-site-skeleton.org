@@ -152,7 +152,8 @@ test/
 </log4j:configuration>
 
 #+END_SRC
-** The core
+** Server-side
+*** The core
 #+BEGIN_SRC clojure :tangle mysite/src/mysite/core.clj
 (ns mysite.core
   (:require [mysite.handler :refer [war-handler]]
@@ -176,7 +177,7 @@ test/
 
 #+END_SRC
 
-** Handler
+*** Handler
 #+BEGIN_SRC clojure :tangle mysite/src/mysite/handler.clj
 (ns mysite.handler
   (:require [compojure.core :refer [defroutes]]
@@ -230,7 +231,7 @@ test/
 
 #+END_SRC
 
-*** Tests
+**** Tests
 #+BEGIN_SRC clojure :tangle mysite/test/mysite/test/handler.clj
 (ns mysite.test.handler
   (:use clojure.test
@@ -250,8 +251,8 @@ test/
 
 #+END_SRC
 
-** Models
-*** Database queries/functions
+*** Models
+**** Database queries/functions
 #+BEGIN_SRC clojure :tangle mysite/src/mysite/models/db.clj
 (ns mysite.models.db
   (:use korma.core
@@ -279,7 +280,7 @@ test/
                  (limit 1))))
 #+END_SRC
 
-*** Schema
+**** Schema
 #+BEGIN_SRC clojure :tangle mysite/src/mysite/models/schema.clj
 (ns mysite.models.schema
   (:require [clojure.java.jdbc :as sql]
@@ -320,7 +321,7 @@ test/
 
 #+END_SRC
 
-** REPL handler
+*** REPL handler
 #+BEGIN_SRC clojure :tangle mysite/src/mysite/repl.clj
 (ns mysite.repl
   (:use mysite.handler
@@ -359,7 +360,7 @@ test/
 
 #+END_SRC
 
-** Routes
+*** Routes
 #+BEGIN_SRC clojure :tangle mysite/src/mysite/routes/auth.clj
 (ns mysite.routes.auth
   (:use compojure.core)
@@ -478,7 +479,7 @@ test/
 
 #+END_SRC
 
-** Utilities
+*** Utilities
 In other words, useful code that doesn't fit elsewhere:
 
 #+BEGIN_SRC clojure :tangle mysite/src/mysite/util.clj
@@ -495,8 +496,8 @@ In other words, useful code that doesn't fit elsewhere:
 
 #+END_SRC
 
-** Views and pages
-*** Layout
+*** Views and pages
+**** Layout
 #+BEGIN_SRC clojure :tangle mysite/src/mysite/views/layout.clj
 (ns mysite.views.layout
   (:require [selmer.parser :as parser]
@@ -531,7 +532,7 @@ In other words, useful code that doesn't fit elsewhere:
   (RenderableTemplate. template params))
 
 #+END_SRC
-*** About page
+**** About page
 #+BEGIN_SRC html :tangle mysite/src/mysite/views/templates/about.html
 {% extends "mysite/views/templates/base.html" %}
 {% block content %}
@@ -540,7 +541,7 @@ In other words, useful code that doesn't fit elsewhere:
 
 #+END_SRC
 
-*** Base page
+**** Base page
 #+BEGIN_SRC html :tangle mysite/src/mysite/views/templates/base.html
 <!DOCTYPE HTML>
 <html>
@@ -584,7 +585,7 @@ In other words, useful code that doesn't fit elsewhere:
 
 #+END_SRC
 
-*** CLJS example
+**** CLJS example
 #+BEGIN_SRC html :tangle mysite/src/mysite/views/templates/cljsexample.html
 {% extends "mysite/views/templates/base.html" %}
 
@@ -607,7 +608,7 @@ In other words, useful code that doesn't fit elsewhere:
 
 #+END_SRC
 
-*** Homepage
+**** Homepage
 #+BEGIN_SRC html :tangle mysite/src/mysite/views/templates/home.html
 {% extends "mysite/views/templates/base.html" %}
 {% block content %}
@@ -626,7 +627,7 @@ In other words, useful code that doesn't fit elsewhere:
 
 #+END_SRC
 
-*** Menu template
+**** Menu template
 #+BEGIN_SRC html :tangle mysite/src/mysite/views/templates/menu.html
 <div class="navbar-collapse collapse">
 {% if user-id %}
@@ -674,7 +675,7 @@ In other words, useful code that doesn't fit elsewhere:
 
 #+END_SRC
 
-*** Profile template
+**** Profile template
 #+BEGIN_SRC html :tangle mysite/src/mysite/views/templates/profile.html
 {% extends "mysite/views/templates/base.html" %}
 {% block menu %}
@@ -700,7 +701,7 @@ In other words, useful code that doesn't fit elsewhere:
 
 #+END_SRC
 
-*** Registration page
+**** Registration page
 #+BEGIN_SRC html :tangle mysite/src/mysite/views/templates/registration.html
 {% extends "mysite/views/templates/base.html" %}
 {% block menu %}
@@ -734,7 +735,8 @@ In other words, useful code that doesn't fit elsewhere:
 
 #+END_SRC
 
-** ClojureScript
+** Client-side
+*** ClojureScript
 #+BEGIN_SRC clojurescript :tangle mysite/src-cljs/main.cljs
 (ns mysite.main
   (:require [ajax.core :refer [GET POST]]
