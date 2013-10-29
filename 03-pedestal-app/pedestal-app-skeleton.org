@@ -7,7 +7,7 @@
 
 * Project meta
 ** Project definition
-#+BEGIN_SRC clojure
+#+BEGIN_SRC clojure :tangle project.clj
 (defproject skeleton-app "0.0.1-SNAPSHOT"
   :description "FIXME: write description"
   :dependencies [[org.clojure/clojure "1.5.1"]
