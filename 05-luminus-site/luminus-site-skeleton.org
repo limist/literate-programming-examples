@@ -1,0 +1,767 @@
+#+TITLE: Luminus/Clojure Website Template, in Org/LP Format
+#+AUTHOR: Kai Wu
+#+EMAIL: k@limist.com
+#+LANGUAGE: en
+#+STARTUP: align hidestars lognotestate
+#+PROPERTY: mkdirp yes
+
+
+* Introduction
+This is the Emacs [[http://orgmode.org][Org mode]] literate-programming single file template
+for a web application using the Luminus "framework."  For the
+structure/files below, I used the command,
+=lein new luminus mysite +cljs +site +http-kit=
+
+** Useful Luminus information/links
+Taken from the Luminus-provided file at
+=mysite/resources/public/md/docs.md=
+
+1. [[http://www.luminusweb.net/docs/html_templating.md][HTML templating]]
+2. [[http://www.luminusweb.net/docs/database.md][Accessing the database]]
+3. [[http://www.luminusweb.net/docs/static_resources.md][Serving static resources]]
+4. [[http://www.luminusweb.net/docs/responses.md][Setting response types]]
+5. [[http://www.luminusweb.net/docs/routes.md][Defining routes]]
+6. [[http://www.luminusweb.net/docs/middleware.md][Adding middleware]]
+7. [[http://www.luminusweb.net/docs/sessions_cookies.md][Sessions and cookies]]
+8. [[http://www.luminusweb.net/docs/security.md][Security]]
+9. [[http://www.luminusweb.net/docs/deployment.md][Deploying the application]]
+
+** What files/directories are NOT included in this =.org= file?
++ Everything under =mysite/resources= such as CSS, fonts, images, JS.
+  Since those files are not tangled/produced from here, you'll see the
+  =resources/= subdir already tracked in the git repository.
+
+
+* Project meta
+** Main configuration
+As of [2013-10-29 Tue], the starting =project.clj= produced by the
+Luminus template used an indentation style that's unorthodox; the
+version below differs with the Luminus one only in indentation.
+
+#+BEGIN_SRC clojure :tangle mysite/project.clj
+(defproject
+  mysite "0.1.0-SNAPSHOT"
+  :dependencies [[org.clojure/clojure "1.5.1"]
+                 [lib-noir "0.7.2"]
+                 [compojure "1.1.5"]
+                 [ring-server "0.3.0"]
+                 [selmer "0.5.0"]
+                 [com.taoensso/timbre "2.6.3"]
+                 [com.postspectacular/rotor "0.1.0"]
+                 [com.taoensso/tower "1.7.1"]
+                 [markdown-clj "0.9.33"]
+                 [com.h2database/h2 "1.3.173"]
+                 [korma "0.3.0-RC6"]
+                 [log4j "1.2.17" :exclusions [javax.mail/mail
+                                              javax.jms/jms
+                                              com.sun.jdmk/jmxtools
+                                              com.sun.jmx/jmxri]]
+                 [com.h2database/h2 "1.3.173"]
+                 [korma "0.3.0-RC6"]
+                 [log4j "1.2.17" :exclusions [javax.mail/mail
+                                              javax.jms/jms
+                                              com.sun.jdmk/jmxtools
+                                              com.sun.jmx/jmxri]]
+                 [http-kit "2.1.11"]
+                 [org.clojure/clojurescript "0.0-1934"]
+                 [domina "1.0.2"]
+                 [prismatic/dommy "0.1.2"]
+                 [cljs-ajax "0.2.0"]]
+  :cljsbuild {:builds [{:source-paths ["src-cljs"],
+                        :compiler {:pretty-print false,
+                                   :output-to "resources/public/js/site.js",
+                                   :optimizations :advanced}}]}
+  :ring {:handler mysite.handler/app,
+         :init mysite.handler/init,
+         :destroy mysite.handler/destroy}
+  :profiles {:production {:ring {:open-browser? false, :stacktraces? false, :auto-reload? false}},
+             :dev {:dependencies [[ring-mock "0.1.5"] [ring/ring-devel "1.2.0"]]}}
+  :url "http://example.com/FIXME"
+  :main mysite.core
+  :plugins [[lein-ring "0.8.7"] [lein-cljsbuild "0.3.3"]]
+  :description "FIXME: write description"
+  :min-lein-version "2.0.0")
+#+END_SRC
+
+** Procfile, for Heroku deployment
+If you want to use this, change the =:tangle no= below to 
+=:tangle mysite/Procfile=
+
+#+BEGIN_SRC text :tangle no
+web: lein with-profile production trampoline ring server
+#+END_SRC
+
+** The README
+Or you could just do your documentation here in this Org file, which
+is superior to Markdown because Org has powerful structural editing.
+
+#+BEGIN_SRC markdown :tangle mysite/README.md
+# mysite
+
+FIXME
+
+## Prerequisites
+
+You will need [Leiningen][1] 2.0 or above installed.
+
+[1]: https://github.com/technomancy/leiningen
+
+## Running
+
+To start a web server for the application, run:
+
+    lein ring server
+
+## License
+
+Copyright © 2013 FIXME
+
+#+END_SRC
+
+** =.gitignore=
+#+BEGIN_SRC shell :tangle mysite/.gitignore
+/target
+/lib
+/classes
+/checkouts
+pom.xml
+*.jar
+*.class
+/.lein-*
+/.env
+
+# Ignore all files tangled from this Org/LP file:
+project.clj
+README.md
+Procfile
+src/
+src-cljs/
+test/
+#+END_SRC
+
+
+* Code and tests
+** log4j configuration
+#+BEGIN_SRC xml :tangle mysite/src/log4j.xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
+  <logger name="com.mchange">
+    <level value="WARN"/>
+  </logger>
+</log4j:configuration>
+
+#+END_SRC
+** The core
+#+BEGIN_SRC clojure :tangle mysite/src/mysite/core.clj
+(ns mysite.core
+  (:require [mysite.handler :refer [war-handler]]
+            [ring.middleware.reload :as reload]
+            [org.httpkit.server :as http-kit]
+            [taoensso.timbre :as timbre])
+  (:gen-class))
+
+(defn dev? [args] (some #{"-dev"} args))
+
+(defn port [args]
+  (if-let [port (first (remove #{"-dev"} args))]
+    (Integer/parseInt port)
+    8080))
+
+(defn -main [& args]
+  (http-kit/run-server
+    (if (dev? args) (reload/wrap-reload war-handler) war-handler)
+    {:port (port args)})
+  (timbre/info "server started on port"))
+
+#+END_SRC
+
+** Handler
+#+BEGIN_SRC clojure :tangle mysite/src/mysite/handler.clj
+(ns mysite.handler
+  (:require [compojure.core :refer [defroutes]]
+            [mysite.routes.home :refer [home-routes]]
+            [noir.util.middleware :as middleware]
+            [compojure.route :as route]
+            [taoensso.timbre :as timbre]
+            [com.postspectacular.rotor :as rotor]
+            [mysite.routes.auth :refer [auth-routes]]
+            [mysite.models.schema :as schema]
+            [mysite.routes.cljsexample :refer [cljs-routes]]))
+
+(defroutes app-routes
+  (route/resources "/")
+  (route/not-found "Not Found"))
+
+(defn init
+  "init will be called once when
+   app is deployed as a servlet on
+   an app server such as Tomcat
+   put any initialization code here"
+  []
+  (timbre/set-config!
+    [:appenders :rotor]
+    {:min-level :info,
+     :enabled? true,
+     :async? false,
+     :max-message-per-msecs nil,
+     :fn rotor/append})
+  (timbre/set-config!
+    [:shared-appender-config :rotor]
+    {:path "mysite.log", :max-size (* 512 1024), :backlog 10})
+  (if-not (schema/initialized?) (schema/create-tables))
+  (timbre/info "mysite started successfully"))
+
+(defn destroy
+  "destroy will be called when your application
+   shuts down, put any clean up code here"
+  []
+  (timbre/info "mysite is shutting down..."))
+
+(def app
+ (middleware/app-handler
+   [cljs-routes auth-routes home-routes app-routes]
+   :middleware
+   []
+   :access-rules
+   []
+   :formats
+   [:json-kw :edn]))
+
+#+END_SRC
+
+*** Tests
+#+BEGIN_SRC clojure :tangle mysite/test/mysite/test/handler.clj
+(ns mysite.test.handler
+  (:use clojure.test
+        ring.mock.request
+        mysite.handler))
+
+(deftest test-app
+  (testing "main route"
+    (let [response (app (request :get "/"))]
+      (is (= (:status response) 200))
+      (is (= (:body response)
+             "<html>\n    <head>\n        <title>Welcome to mysite</title>\n        <link href=\"/css/screen.css\" rel=\"stylesheet\" type=\"text/css\"></link>\n    </head>\n    <body>\n        <div class=\"navbar navbar-fixed-top navbar-inverse\">\n            <ul class=\"nav\">\n                <li>\n                    <a href=\"/\">Home</a>\n                </li>\n                <li>\n                    <a href=\"/about\">About</a>\n                </li>\n            </ul>\n        </div>\n        <div id=\"content\">\n        <h1>Welcome to mysite</h1>\n        \n<h2>Some links to get started</h2><ol><li><a href='http://www.luminusweb.net/docs/html&#95;templating.md'>HTML templating</a></li><li><a href='http://www.luminusweb.net/docs/database.md'>Accessing the database</a></li><li><a href='http://www.luminusweb.net/docs/static&#95;resources.md'>Serving static resources</a></li><li><a href='http://www.luminusweb.net/docs/responses.md'>Setting response types</a></li><li><a href='http://www.luminusweb.net/docs/routes.md'>Defining routes</a></li><li><a href='http://www.luminusweb.net/docs/middleware.md'>Adding middleware</a></li><li><a href='http://www.luminusweb.net/docs/sessions&#95;cookies.md'>Sessions and cookies</a></li><li><a href='http://www.luminusweb.net/docs/security.md'>Security</a></li><li><a href='http://www.luminusweb.net/docs/deployment.md'>Deploying the application</a></li></ol>\n\n        </div>        \n        <footer>Copyright ...</footer>\n    </body>\n</html>\n\n\n"))))
+
+  (testing "not-found route"
+    (let [response (app (request :get "/invalid"))]
+      (is (= (:status response) 404)))))
+
+#+END_SRC
+
+** Models
+*** Database queries/functions
+#+BEGIN_SRC clojure :tangle mysite/src/mysite/models/db.clj
+(ns mysite.models.db
+  (:use korma.core
+        [korma.db :only (defdb)])
+  (:require [mysite.models.schema :as schema]))
+
+(defdb db schema/db-spec)
+
+(defentity users)
+
+(defn create-user [user]
+  (insert users
+          (values user)))
+
+(defn update-user [id first-name last-name email]
+  (update users
+  (set-fields {:first_name first-name
+               :last_name last-name
+               :email email})
+  (where {:id id})))
+
+(defn get-user [id]
+  (first (select users
+                 (where {:id id})
+                 (limit 1))))
+#+END_SRC
+
+*** Schema
+#+BEGIN_SRC clojure :tangle mysite/src/mysite/models/schema.clj
+(ns mysite.models.schema
+  (:require [clojure.java.jdbc :as sql]
+            [noir.io :as io]))
+
+(def db-store "site.db")
+
+(def db-spec {:classname "org.h2.Driver"
+              :subprotocol "h2"
+              :subname (str (io/resource-path) db-store)
+              :user "sa"
+              :password ""
+              :naming {:keys clojure.string/lower-case
+                       :fields clojure.string/upper-case}})
+(defn initialized?
+  "checks to see if the database schema is present"
+  []
+  (.exists (new java.io.File (str (io/resource-path) db-store ".h2.db"))))
+
+(defn create-users-table
+  []
+  (sql/with-connection db-spec
+    (sql/create-table
+      :users
+      [:id "varchar(20) PRIMARY KEY"]
+      [:first_name "varchar(30)"]
+      [:last_name "varchar(30)"]
+      [:email "varchar(30)"]
+      [:admin :boolean]
+      [:last_login :time]
+      [:is_active :boolean]
+      [:pass "varchar(100)"])))
+
+(defn create-tables
+  "creates the database tables used by the application"
+  []
+  (create-users-table))
+
+#+END_SRC
+
+** REPL handler
+#+BEGIN_SRC clojure :tangle mysite/src/mysite/repl.clj
+(ns mysite.repl
+  (:use mysite.handler
+        ring.server.standalone
+        [ring.middleware file-info file]))
+
+(defonce server (atom nil))
+
+(defn get-handler []
+  ;; #'app expands to (var app) so that when we reload our code,
+  ;; the server is forced to re-resolve the symbol in the var
+  ;; rather than having its own copy. When the root binding
+  ;; changes, the server picks it up without having to restart.
+  (-> #'app
+    ; Makes static assets in $PROJECT_DIR/resources/public/ available.
+    (wrap-file "resources")
+    ; Content-Type, Content-Length, and Last Modified headers for files in body
+    (wrap-file-info)))
+
+(defn start-server
+  "used for starting the server in development mode from REPL"
+  [& [port]]
+  (let [port (if port (Integer/parseInt port) 8080)]
+    (reset! server
+            (serve (get-handler)
+                   {:port port
+                    :init init
+                    :auto-reload? true
+                    :destroy destroy
+                    :join? false}))
+    (println (str "You can view the site at http://localhost:" port))))
+
+(defn stop-server []
+  (.stop @server)
+  (reset! server nil))
+
+#+END_SRC
+
+** Routes
+#+BEGIN_SRC clojure :tangle mysite/src/mysite/routes/auth.clj
+(ns mysite.routes.auth
+  (:use compojure.core)
+  (:require [mysite.views.layout :as layout]
+            [noir.session :as session]
+            [noir.response :as resp]
+            [noir.validation :as vali]
+            [noir.util.crypt :as crypt]
+            [mysite.models.db :as db]))
+
+(defn valid? [id pass pass1]
+  (vali/rule (vali/has-value? id)
+             [:id "user ID is required"])
+  (vali/rule (vali/min-length? pass 5)
+             [:pass "password must be at least 5 characters"])
+  (vali/rule (= pass pass1)
+             [:pass1 "entered passwords do not match"])
+  (not (vali/errors? :id :pass :pass1)))
+
+(defn register [& [id]]
+  (layout/render
+    "registration.html"
+    {:id id
+     :id-error (vali/on-error :id first)
+     :pass-error (vali/on-error :pass first)
+     :pass1-error (vali/on-error :pass1 first)}))
+
+(defn handle-registration [id pass pass1]
+  (if (valid? id pass pass1)
+    (try
+      (do
+        (db/create-user {:id id :pass (crypt/encrypt pass)})
+        (session/put! :user-id id)
+        (resp/redirect "/"))
+      (catch Exception ex
+        (vali/rule false [:id (.getMessage ex)])
+        (register)))
+    (register id)))
+
+(defn profile []
+  (layout/render
+    "profile.html"
+    {:user (db/get-user (session/get :user-id))}))
+
+(defn update-profile [{:keys [first-name last-name email]}]
+  (db/update-user (session/get :user-id) first-name last-name email)
+  (profile))
+
+(defn handle-login [id pass]
+  (let [user (db/get-user id)]
+    (if (and user (crypt/compare pass (:pass user)))
+      (session/put! :user-id id))
+    (resp/redirect "/")))
+
+(defn logout []
+  (session/clear!)
+  (resp/redirect "/"))
+
+(defroutes auth-routes
+  (GET "/register" []
+       (register))
+
+  (POST "/register" [id pass pass1]
+        (handle-registration id pass pass1))
+
+  (GET "/profile" [] (profile))
+
+  (POST "/update-profile" {params :params} (update-profile params))
+
+  (POST "/login" [id pass]
+        (handle-login id pass))
+
+  (GET "/logout" []
+        (logout)))
+
+#+END_SRC
+
+#+BEGIN_SRC clojure :tangle mysite/src/mysite/routes/cljsexample.clj
+(ns mysite.routes.cljsexample
+  (:require [compojure.core :refer :all]
+            [noir.response :as response]
+            [mysite.views.layout :as layout]))
+
+(def messages
+  (atom 
+    [{:message "Hello world"
+      :user    "Foo"}
+     {:message "Ajax is fun"
+      :user    "Bar"}]))
+
+(defroutes cljs-routes
+  (GET "/cljsexample" [] (layout/render "cljsexample.html")) 
+  (GET "/messages" [] (response/edn @messages))
+  (POST "/add-message" [message user] 
+        (response/edn 
+          (swap! messages conj {:message message :user user}))))
+
+#+END_SRC
+
+#+BEGIN_SRC clojure :tangle mysite/src/mysite/routes/home.clj
+(ns mysite.routes.home
+  (:use compojure.core)
+  (:require [mysite.views.layout :as layout]
+            [mysite.util :as util]))
+
+(defn home-page []
+  (layout/render
+    "home.html" {:content (util/md->html "/md/docs.md")}))
+
+(defn about-page []
+  (layout/render "about.html"))
+
+(defroutes home-routes
+  (GET "/" [] (home-page))
+  (GET "/about" [] (about-page)))
+
+#+END_SRC
+
+** Utilities
+In other words, useful code that doesn't fit elsewhere:
+
+#+BEGIN_SRC clojure :tangle mysite/src/mysite/util.clj
+(ns mysite.util
+  (:require [noir.io :as io]
+            [markdown.core :as md]))
+
+(defn md->html
+  "reads a markdown file from public/md and returns an HTML string"
+  [filename]
+  (->>
+    (io/slurp-resource filename)
+    (md/md-to-html-string)))
+
+#+END_SRC
+
+** Views and pages
+*** Layout
+#+BEGIN_SRC clojure :tangle mysite/src/mysite/views/layout.clj
+(ns mysite.views.layout
+  (:require [selmer.parser :as parser]
+            [clojure.string :as s]
+            [ring.util.response :refer [content-type response]]
+            [noir.session :as session])
+  (:import compojure.response.Renderable))
+
+(def template-path "mysite/views/templates/")
+
+(deftype
+  RenderableTemplate
+  [template params]
+  Renderable
+  (render
+    [this request]
+    (content-type
+      (->>
+        (assoc
+          params
+          (keyword (s/replace template #".html" "-selected"))
+          "active"
+          :servlet-context
+          (:context request)
+          :user-id
+          (session/get :user-id))
+        (parser/render-file (str template-path template))
+        response)
+      "text/html; charset=utf-8")))
+
+(defn render [template & [params]]
+  (RenderableTemplate. template params))
+
+#+END_SRC
+*** About page
+#+BEGIN_SRC html :tangle mysite/src/mysite/views/templates/about.html
+{% extends "mysite/views/templates/base.html" %}
+{% block content %}
+ <p>this is the story of mysite... work in progress</p>
+{% endblock %}
+
+#+END_SRC
+
+*** Base page
+#+BEGIN_SRC html :tangle mysite/src/mysite/views/templates/base.html
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>Welcome to mysite</title>
+	</head>
+	<body>
+			<div class="navbar navbar-default navbar-fixed-top">
+				<div class="container">
+					<div class="navbar-header">
+						<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+							<span class="icon-bar"></span>
+							<span class="icon-bar"></span>
+							<span class="icon-bar"></span>
+						</button> 
+						<a class="navbar-brand" href="{{servlet-context}}/">mysite</a>
+					</div>
+					{% block menu %}
+					{% include "mysite/views/templates/menu.html" %}
+					{% endblock %}
+				</div>
+			</div>
+			<div class="container">
+				{% block content %}
+				{% endblock %}
+			</div>
+		<!-- scripts and styles -->
+        {% style "/css/bootstrap-theme.min.css" %}
+        {% style "/css/bootstrap.min.css" %}
+        {% style "/css/screen.css" %}
+        <script src="//code.jquery.com/jquery-2.0.3.min.js" type="text/javascript"></script>
+        {% script "/js/bootstrap.min.js" %}
+        <script type="text/javascript">
+            var context = "{{servlet-context}}";
+            $(function() {
+              $("#{{selected-page}}").addClass("active");
+            });
+        </script>
+	</body>
+</html>
+
+#+END_SRC
+
+*** CLJS example
+#+BEGIN_SRC html :tangle mysite/src/mysite/views/templates/cljsexample.html
+{% extends "mysite/views/templates/base.html" %}
+
+{% block content %}
+
+<br/>
+<div id="messages"></div>
+<textarea id="message"></textarea>
+<br/>
+<input type="text" id="user"></input>
+<br/>
+<button id="send">add message</button>
+
+<!--  scripts -->
+<script type="text/javascript" src="{{servlet-context}}/js/site.js"></script>
+<script type="text/javascript">
+	mysite.main.init();
+</script>
+{% endblock %}
+
+#+END_SRC
+
+*** Homepage
+#+BEGIN_SRC html :tangle mysite/src/mysite/views/templates/home.html
+{% extends "mysite/views/templates/base.html" %}
+{% block content %}
+ <div class="jumbotron">
+    <h1>Welcome to mysite</h1>
+    <p>Time to start building your site!</p>
+    <p><a class="btn btn-primary btn-large" href="http://luminusweb.net">Learn more &raquo;</a></p>
+ </div>
+
+ <div class="row-fluid">
+    <div class="span8">
+    {{content|safe}}
+    </div>
+ </div>
+{% endblock %}
+
+#+END_SRC
+
+*** Menu template
+#+BEGIN_SRC html :tangle mysite/src/mysite/views/templates/menu.html
+<div class="navbar-collapse collapse">
+{% if user-id %}
+	<div class="btn-group pull-right">
+		<ul class="nav navbar-nav">
+			 <li class="dropdown">
+				 <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+				 	<i class="icon-user"></i>{{user-id}} <b class="caret"></b>
+				 </a>
+				 <ul class="dropdown-menu">
+				 	<li><a href="{{servlet-context}}/profile">Profile</a></li>
+					<li class="divider"></li>
+					<li><a href="{{servlet-context}}/logout">Sign Out</a></li>
+				 </ul>
+			 </li>
+		</ul>
+	</div>
+	{% else %}
+	<div class="btn-group pull-right">
+		<ul class="nav navbar-nav">
+			 <li class="dropdown">
+				<form action="{{servlet-context}}/login" class="navbar-form" method="POST">
+					<input class="span2"
+					       id="id"
+					       name="id"
+					       placeholder="user id"
+						   style="margin-right: 5px"
+						   type="text"/>
+					 <input class="span2"
+				        id="pass"
+				        name="pass"
+				        placeholder="password"
+					    style="margin-right: 5px"
+					    type="password"/>
+                    <input class="btn" type="submit" value="Login"/>
+				</form>
+			</li>
+			<li>
+				<a href="{{servlet-context}}/register">Register</a>
+			</li>
+		</ul>
+	</div>
+{% endif %}
+</div>
+
+#+END_SRC
+
+*** Profile template
+#+BEGIN_SRC html :tangle mysite/src/mysite/views/templates/profile.html
+{% extends "mysite/views/templates/base.html" %}
+{% block menu %}
+{% endblock %}
+{% block content %}
+<h2>User details for {{user.id}}</h2>
+		<form action="{{servlet-context}}/update-profile" method="POST">
+			<label for="id">first name</label>			
+			<p>
+				<input id="first-name" name="first-name" tabindex="1" type="text" value={{user.first_name}}></input>
+			</p>
+			<label for="id">last name</label>
+			<p>
+				<input id="last-name" name="last-name" tabindex="1" type="text" value={{user.last_name}}></input>
+			</p>
+			<label for="id">email</label>
+			<p>
+				<input id="email" name="email" tabindex="1" type="text" value={{user.email}}></input>
+			</p>			
+			<input class="btn" tabindex="4" type="submit" value="update profile">
+		</form>
+{% endblock %}
+
+#+END_SRC
+
+*** Registration page
+#+BEGIN_SRC html :tangle mysite/src/mysite/views/templates/registration.html
+{% extends "mysite/views/templates/base.html" %}
+{% block menu %}
+{% endblock %}
+{% block content %}
+		<form action="{{servlet-context}}/register" method="POST">
+			<label for="id">user id</label>
+			{% if id-error %}
+			<div class="error">{{id-error}}</div>
+			{% endif %}
+			<p>
+				<input id="id" name="id" tabindex="1" type="text" value={{id}}></input>
+			</p>
+			<label for="pass">password</label>
+			{% if pass-error %}
+			<div class="error">{{pass-error}}</div>
+			{% endif %}
+			<p>
+				<input id="pass" name="pass" tabindex="2" type="password"></input>
+			</p>
+			<label for="pass1">retype password</label>
+			{% if pass1-error %}
+			<div class="error">{{pass1-error}}</div>
+			{% endif %}
+			<p>
+				<input id="pass1" name="pass1" tabindex="3" type="password"></input>
+			</p>
+			<input class="btn" tabindex="4" type="submit" value="create account">
+		</form>
+{% endblock %}
+
+#+END_SRC
+
+** ClojureScript
+#+BEGIN_SRC clojurescript :tangle mysite/src-cljs/main.cljs
+(ns mysite.main
+  (:require [ajax.core :refer [GET POST]]
+            [domina :refer [value by-id destroy-children! append!]]
+            [domina.events :refer [listen!]]
+            [dommy.template :as template]))
+
+(defn render-message [{:keys [message user]}]
+  [:li [:p {:id user} message " - " user]])
+
+(defn render-messages [messages]
+  (let [messages-div (by-id "messages")]
+    (destroy-children! messages-div)
+    (->> messages
+         (map render-message)
+         (into [:ul])
+         template/node
+         (append! messages-div))))
+
+(defn add-message [_]
+  (POST "/add-message"
+        {:params {:message (value (by-id "message"))
+                  :user    (value (by-id "user"))}
+         :handler render-messages}))
+
+(defn ^:export init []
+  (GET "/messages" {:handler render-messages})
+  (listen! (by-id "send") :click add-message))
+
+#+END_SRC
