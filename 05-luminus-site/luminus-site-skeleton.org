@@ -138,7 +138,10 @@ test/
 ** log4j configuration, for Korma
 Note that for application/Clojure-level logging we use [[https://github.com/ptaoussanis/timbre][Timbre]].
 
-#+BEGIN_SRC xml :tangle mysite/src/log4j.xml
+Note the header argument of =:padline no= for XML files is needed to
+avoid an error in XML parsing.
+
+#+BEGIN_SRC xml :tangle mysite/src/log4j.xml :padline no
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
 <log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
