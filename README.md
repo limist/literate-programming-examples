@@ -124,3 +124,10 @@ More information
   [Working with source code](http://orgmode.org/org.html#Working-With-Source-Code)
 - The excellent paper by Schulte and Davison,
   [Active Documents with Org-Mode](http://www.cs.unm.edu/~eschulte/data/CISE-13-3-SciProg.pdf)
+
+- Pro-tip: when you want to "tangle" or export code blocks from an org
+  file, =CTRL-c-v-t= is the keystroke combo to tangle all blocks.  To
+  tangle only ONE block, the current one your cursor is in, just use
+  the Emacs prefix code first: =CTRL-u-c-v-t= For big org files, this
+  saves time, as it's essentially instantaneous to tangle/export one
+  block.
