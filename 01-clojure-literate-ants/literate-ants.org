@@ -5,7 +5,7 @@
 #+STARTUP: align indent fold nodlcheck hidestars oddeven lognotestate
 #+PROPERTY: tangle literate-ants.clj
 #+EXPORT_SELECT_TAGS: export
-#+EXPORT_EXCLUDE_TAGS: noexport
+#+EXPORT_EXCLUDE_TAGS: noexport NOEXPORT
 #+OPTIONS: f:t
 
 * Introduction
