@@ -6,6 +6,7 @@
 #+PROPERTY: tangle literate-ants.clj
 #+EXPORT_SELECT_TAGS: export
 #+EXPORT_EXCLUDE_TAGS: noexport
+#+OPTIONS: f:t
 
 * Introduction
 ** What is this, why is it worthwhile? Quickly please!
