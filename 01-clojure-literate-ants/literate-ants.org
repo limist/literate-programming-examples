@@ -280,7 +280,7 @@ themselves. As before, we start with =defstruct=, defining an ant as
 having only one required key, its direction. (An ant may temporarily
 have another key, =:food=.)
 
-#+name ants-defined
+#+name: ants-defined
 #+BEGIN_SRC clojure :exports code :results silent :session s1 
 (defstruct ant :dir)  ; Always has dir heading; may also have :food
 
@@ -339,7 +339,7 @@ square will initially contain all the ants - one ant per cell - before
 the simulation runs. We can see these two aspects of the home-square
 in the two =def= calls for =home-offset= and =home-range= below.
 
-#+name home-setup
+#+name: home-setup
 #+BEGIN_SRC clojure :exports code :results silent :session s1 
 (def home-offset (/ dim 4))
 (def home-range (range home-offset (+ nants-sqrt home-offset)))
@@ -397,7 +397,7 @@ atomically and consistently.
 Next, consider facing/orientation and moving to another place in the
 2-D world. Three functions below, followed by explanations:
 
-#+name world-wrapping
+#+name: world-wrapping
 #+BEGIN_SRC clojure :exports code :results silent :session s1 
 (defn bound 
   "Returns given n, wrapped into range 0-b"
@@ -452,7 +452,7 @@ Our ants need two behaviors to get around their world: turning (or
 changing the direction they "face"), and stepping forward.  Let's deal
 with turning first:
 
-#+name ant-agent-turn
+#+name: ant-agent-turn
 #+BEGIN_SRC clojure :exports code :results silent :session s1 
 ;; An ant agent tracks the location of an ant, and controls the
 ;; behavior of the ant at that location.
@@ -476,7 +476,7 @@ with the updated ant.
 
 Now for actual movement to a new place:
 
-#+name ant-agent-move
+#+name: ant-agent-move
 #+BEGIN_SRC clojure :exports code :results silent :session s1 
 (defn move 
   "Moves the ant in the direction it is heading. Must be called in a
@@ -512,7 +512,7 @@ interactions (each having two steps) change the board, and as with the
 =move= function, they need to occur atomically (all-or-nothing) to
 ensure the [[http://www.youtube.com/watch?v=z_KmNZNT5xw][world is in a consistent state]]. 
 
-#+name ant-agent-food
+#+name: ant-agent-food
 #+BEGIN_SRC clojure :exports code :results silent :session s1 
 (defn take-food [loc]
   "Takes one food from current location. Must be called in a
@@ -552,7 +552,7 @@ is based on two states, either:
 So we need functions to express preference of the next location for an
 ant. The functions =rank-by= and =wrand= help with that.
 
-#+name ant-agent-judgment-1
+#+name: ant-agent-judgment-1
 #+BEGIN_SRC clojure :exports code :results silent :session s1 
 (defn rank-by 
   "Returns a map of xs to their 1-based rank when sorted by keyfn."
@@ -598,7 +598,7 @@ Next: The =wrand= function helps with the larger task of randomizing
 which location/cell the ant moves to next in a weighted manner; i.e.
 the "dice" are loaded with =rank-by=, then "rolled" here:
 
-#+name ant-agent-judgment-2
+#+name: ant-agent-judgment-2
 #+BEGIN_SRC clojure :exports code :results silent :session s1 
 (defn wrand 
   "Given a vector of slice sizes, returns the index of a slice given a
@@ -653,7 +653,7 @@ to agents. And there certainly are potentially blocking actions when
 using =behave=, since ants may try to move into the same cell, try to
 acquire the same food, etc.
 
-#+name ant-agent-behave
+#+name: ant-agent-behave
 #+BEGIN_SRC clojure :exports code :results silent :session s1 
 (defn behave 
   "The main function for the ant agent."
