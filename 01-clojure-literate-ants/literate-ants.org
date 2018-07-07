@@ -4,7 +4,8 @@
 #+LANGUAGE: en
 #+STARTUP: align indent fold nodlcheck hidestars oddeven lognotestate
 #+PROPERTY: tangle literate-ants.clj
-
+#+EXPORT_SELECT_TAGS: export
+#+EXPORT_EXCLUDE_TAGS: noexport
 
 * Introduction
 ** What is this, why is it worthwhile? Quickly please!
@@ -51,9 +52,11 @@
    active format.
 
 ** Why Clojure?
-[[http://clojure.org][Clojure]] is a modern Lisp dialect that runs (primarily) on the [[http://en.wikipedia.org/wiki/Jvm][Java
-Virtual Machine]]. As a language its main paradigm is [[http://en.wikipedia.org/wiki/Functional_programming][functional
-programming]] (vs. the usual [[http://en.wikipedia.org/wiki/Object-oriented_programming][OO]] or [[http://en.wikipedia.org/wiki/Imperative_programming][imperative]] languages of Java, Python,
+[[http://clojure.org][Clojure]] is a modern Lisp dialect that runs (primarily) 
+on the [[http://en.wikipedia.org/wiki/Jvm][Java Virtual Machine]]. 
+As a language its main paradigm is [[http://en.wikipedia.org/wiki/Functional_programming][functional programming]] 
+(vs. the usual [[http://en.wikipedia.org/wiki/Object-oriented_programming][OO]] 
+or [[http://en.wikipedia.org/wiki/Imperative_programming][imperative]] languages of Java, Python,
 Ruby), and it also provides powerful constructs for concurrency such
 as [[http://en.wikipedia.org/wiki/Software_transactional_memory][software transactional memory (STM)]].
 
@@ -70,8 +73,8 @@ So why use or learn Clojure?
 
 ** Why literate ants?
 When Clojure was invented and began picking up interest from
-2007/2008, its creator Rich Hickey would [[http://www.youtube.com/watch?v=dGVqrGmwOAw][highlight Clojure's features
-with a demo program]]: a visual simulation of ants seeking food on a
+2007/2008, its creator Rich Hickey would [[http://www.youtube.com/watch?v=dGVqrGmwOAw][highlight Clojure's features with a demo program]]:
+ a visual simulation of ants seeking food on a
 finite 2-D "world" board. I found the =ants.clj= program fascinating,
 particularly as simulation is a core interest. Historically,
 [[https://en.wikipedia.org/wiki/Object-oriented_programming#History][simulations motivated the object-oriented programming]] paradigm, so
@@ -80,8 +83,8 @@ encapsulation, concurrent state, and modeling changes over time drew
 me in to Clojure.
 
 To build more skill in Clojure, I wanted to fully understand
-=ants.clj=.  I also wanted to try Knuth's [[http://vasc.ri.cmu.edu/old_help/Programming/Literate/literate.html][literate programming
-approach]] (LP), using my favorite tool: [[http://www.gnu.org/software/emacs/][Emacs]] and its peerless
+=ants.clj=.  I also wanted to try Knuth's [[http://vasc.ri.cmu.edu/old_help/Programming/Literate/literate.html][literate programming approach]] (LP),
+ using my favorite tool: [[http://www.gnu.org/software/emacs/][Emacs]] and its peerless
 [[http://orgmode.org][org-mode]]. Thus this =.org= file (and its HTML or PDF version) you're
 now looking at is the literate version of Hickey's =ants.clj= code. I
 took the original program, made minor changes for my comprehension,
@@ -109,8 +112,7 @@ structured literate code file, w/ syntax-highlighted code blocks.
 Before you dive into the actual code, you may want to run the ants
 simulation first - seeing it in action will help with understanding
 the details too.  So tangle this literate file per above instructions,
-so you have the =literate-ants.clj= file, then jump down to [[Running
-the Program]].
+so you have the =literate-ants.clj= file, then jump down to [[Running the Program]].
 
 ** Caveats - this may not be the LP you're looking for
 1. Don't take this file as anything like an ideal literate programming
@@ -140,7 +142,7 @@ be introduced to some of Clojure's powers.
 After the copyright notice, the initial setup code of =ants.clj= is
 easy to understand (for coders at least), even if you've never dealt
 with Lisp before. We see parameters (aka constants and magic numbers)
-being defined for later use using Clojure's =[[http://clojure.org/special_forms#def][def]]= special form: =def=
+being defined for later use using Clojure's [[http://clojure.org/special_forms#def][def]] special form: =def=
 creates a var (a mutable storage location) which connects a symbol to
 a value in the current [[http://clojure.org/namespaces][namespace]].
 
@@ -186,11 +188,11 @@ needs defining:
 #+BEGIN_SRC clojure :exports code :results silent :session s1 
 (defstruct cell :food :pher)  ; May also have :ant and :home values
 #+END_SRC
-First, a call to =[[http://clojuredocs.org/clojure_core/clojure.core/defstruct][defstruct]]= (like a hashmap or dictionary in other
+First, a call to [[http://clojuredocs.org/clojure_core/clojure.core/defstruct][defstruct]] (like a hashmap or dictionary in other
 languages) defines a baseline /cell/. 
 - =defstruct= is like a very lightweight class or
   constructor/template function, and conveniently wraps Clojure's
-  =[[http://clojuredocs.org/clojure_core/clojure.core/create-struct][create-struct]]=.
+  [[http://clojuredocs.org/clojure_core/clojure.core/create-struct][create-struct]].
 - Here, a cell has two keys to start, =:food= and =:pher=, to
   indicate the presence of food and pheromones. A cell may also have
   keys of =:ant= and =:home=, depending on whether an ant and/or the
@@ -200,7 +202,7 @@ Next, the =world= function creates the 2-dimensional "board" of cells
 (here, a square of 80x80 cells), represented as vectors (rows or the
 vertical y-dimension) of a vector (the horizontal x-dimension columns
 in one row):
-#+name sim-world-board-creation
+#+name: sim-world-board-creation
 #+BEGIN_SRC clojure :exports code :results silent :session s1 
 ;; World is a 2d vector of refs to cells
 (def world 
@@ -213,9 +215,9 @@ in one row):
                  (range dim))))
 #+END_SRC
 Reading the above:
-- Start with the innermost =[[http://clojuredocs.org/clojure_core/clojure.core/map][map]]= call, which uses an anonymous
+- Start with the innermost [[http://clojuredocs.org/clojure_core/clojure.core/map][map]] call, which uses an anonymous
   function to create one column of 80 cells, per =(range dim)=. The
-  =[[http://clojuredocs.org/clojure_core/clojure.core/struct][struct]]= returns a new structmap instance using the earlier cell as
+  [[http://clojuredocs.org/clojure_core/clojure.core/struct][struct]] returns a new structmap instance using the earlier cell as
   the basis, initializing the =:food= and =:pher= values to zero.
 - But notice that =struct= is wrapped with a [[http://clojure.org/refs][transactional ref]], and
   here's the first glimpse of Clojure's concurrency powers. With
@@ -305,11 +307,10 @@ To explain the above constructor function for ants, =create-ant=:
 + The [[http://clojuredocs.org/clojure_core/clojure.core/let][let special form]] binds pairs of symbols and expressions in its
   arguments vector, providing local, lexical bindings within the scope
   of the body following.
-+ =sync= will ensure that any mutations of refs using the [[http://clojuredocs.org/clojure_core/clojure.core/alter][alter
-  function]] will be atomic. Previously we had used =ref= around each
++ =sync= will ensure that any mutations of refs using the [[http://clojuredocs.org/clojure_core/clojure.core/alter][alter function]] will be atomic. Previously we had used =ref= around each
   cell, so in the above code where =the-place= is such a ref-wrapped
   cell, =alter= takes =the-place= ref as its first argument, then
-  =[[http://clojuredocs.org/clojure_contrib/clojure.contrib.generic.collection/assoc][assoc]]= as the function to be [[http://clojuredocs.org/clojure_core/clojure.core/apply][apply]]'ed on the-place, tying a new ant
+  [[http://clojuredocs.org/clojure_contrib/clojure.contrib.generic.collection/assoc][assoc]] as the function to be [[http://clojuredocs.org/clojure_core/clojure.core/apply][apply]]'ed on the-place, tying a new ant
   instance to it (remember that as a cell, =the-place= is sure to have
   =:food= and =:pher= key-values already, now we add =:ant=). Like the
   thrush operator earlier, the syntax of =alter= enables convenient
@@ -432,8 +433,7 @@ and [[http://en.wikipedia.org/wiki/Asteroids_(video_game)][Asteroids]]. The func
 these world-behaviors, while the definition of =direction-delta= maps
 a movement in a cardinal direction to the corresponding change in x
 and y. A few comments on each:
-- The =bound= function using the built-in [[http://clojuredocs.org/clojure_core/clojure.core/rem][rem (i.e. remainder)
-  function]] is straightforward. Observe how =bound= is used in
+- The =bound= function using the built-in [[http://clojuredocs.org/clojure_core/clojure.core/rem][rem (i.e. remainder) function]] is straightforward. Observe how =bound= is used in
   delta-location to ensure wrap-around behavior in: 1) cardinal
   directions; 2) the world-board, at its edges given by =dim=.
 - =direction-delta= maps the eight cardinal directions (0 is North) to
@@ -644,10 +644,11 @@ mind its main parts while diving into details:
 Also, consider the context of how =behave= is first used: within the
 main invocation at the end, there's the expression:
 
+#+BEGIN_EXAMPLE clojure
 src_clojure{(dorun (map #(send-off % behave) ants))}
+#+END_EXAMPLE
 
-So the =behave= function is called on every ant agent via the [[http://clojuredocs.org/clojure_core/clojure.core/send-off][send-off
-function]], which is how Clojure dispatches potentially blocking actions
+So the =behave= function is called on every ant agent via the [[http://clojuredocs.org/clojure_core/clojure.core/send-off][send-off function]], which is how Clojure dispatches potentially blocking actions
 to agents. And there certainly are potentially blocking actions when
 using =behave=, since ants may try to move into the same cell, try to
 acquire the same food, etc.
@@ -797,7 +798,7 @@ ants' pheromones diminish and evaporate from the world over time.
 The =evaporate= function fulfills that requirement: 
 + It takes no arguments, it will work over the entire world/board of
   cells, accessed via the tuples of =x= and =y=.
-+ The =[[http://clojuredocs.org/clojure_core/clojure.core/dorun][dorun]]= function takes a lazy collection/sequence (here, that of
++ The [[http://clojuredocs.org/clojure_core/clojure.core/dorun][dorun]] function takes a lazy collection/sequence (here, that of
   the =for= expression) and forces the realization of that collection
   for its side effects, discarding any returned values.
   - It's unlike the similarly-named =doall= where we do care about the
@@ -827,10 +828,9 @@ wrapping calls to Java.
 #+END_SRC
 
 The =import= pulls in classes from [[http://docs.oracle.com/javase/6/docs/api/java/awt/package-summary.html][Java's Abstract Window Toolkit]]
-(AWT) package, and from the Java Swing package. (Aside: curious [[http://stackoverflow.com/questions/727844/javax-vs-java-package][why
-Swing is in the =javax= namespace]]?)  Assuming unfamiliarity with Java
+(AWT) package, and from the Java Swing package. (Aside: curious [[http://stackoverflow.com/questions/727844/javax-vs-java-package][why Swing is in the =javax= namespace]]?)  Assuming unfamiliarity with Java
 Swing, let's describe the classes used:
-+ The =[[http://docs.oracle.com/javase/6/docs/api/java/awt/Color.html][Color]]= class encapsulates a color in the standard RGB color
++ The [[http://docs.oracle.com/javase/6/docs/api/java/awt/Color.html][Color]] class encapsulates a color in the standard RGB color
   space. In the code below, its usage as a constructor for a color
   instance follows several arities:
   - 4 integer arguments: r, g, b, and a for the alpha/transparency (0
@@ -839,9 +839,9 @@ Swing, let's describe the classes used:
   - 1 argument: not a constructor call, but an access of a predefined
     static =Color= field by name, returning the color in the RGB color
     space.
-+ The =[[http://docs.oracle.com/javase/6/docs/api/java/awt/Graphics.html][Graphics]]= class is an abstract base class for all graphics
++ The [[http://docs.oracle.com/javase/6/docs/api/java/awt/Graphics.html][Graphics]] class is an abstract base class for all graphics
   contexts, i.e. a =Graphics= instance holds the current state data
-  needed for rendering it: the =[[http://docs.oracle.com/javase/6/docs/api/java/awt/Component.html][Component]]= object on which to draw,
+  needed for rendering it: the [[http://docs.oracle.com/javase/6/docs/api/java/awt/Component.html][Component]] object on which to draw,
   the current clip, color, and font, etc. Below, we'll see that the
   Clojure functions that take a =Graphics= instance as an argument:
   - =fill-cell=
@@ -849,15 +849,15 @@ Swing, let's describe the classes used:
   - =render-place=
   - =render=
   ...all do some kind of rendering/drawing.
-+ The =[[http://docs.oracle.com/javase/6/docs/api/java/awt/Dimension.html][Dimension]]= class encapsulates the integer width and height of a
++ The [[http://docs.oracle.com/javase/6/docs/api/java/awt/Dimension.html][Dimension]] class encapsulates the integer width and height of a
   component. This class is used just once below, in setting the size
   of the panel of the UI.
-+ =[[http://docs.oracle.com/javase/6/docs/api/java/awt/image/BufferedImage.html][BufferedImage]]= class is needed for raster image data; below, the
++ [[http://docs.oracle.com/javase/6/docs/api/java/awt/image/BufferedImage.html][BufferedImage]] class is needed for raster image data; below, the
   =render= function uses it to paint the background panel.
-+ The =[[http://docs.oracle.com/javase/1.4.2/docs/api/javax/swing/JPanel.html][JPanel]]= class is the generic "lightweight" UI container in Java
++ The [[http://docs.oracle.com/javase/1.4.2/docs/api/javax/swing/JPanel.html][JPanel]] class is the generic "lightweight" UI container in Java
   Swing (seems like the =div= element in HTML).  Below, it's used just
   once for the main display.
-+ The =[[http://docs.oracle.com/javase/1.4.2/docs/api/javax/swing/JFrame.html][JFrame]]= class creates a top-level window (w/ title and border)
++ The [[http://docs.oracle.com/javase/1.4.2/docs/api/javax/swing/JFrame.html][JFrame]] class creates a top-level window (w/ title and border)
   in Swing; it's used just once below for the main ants UI window.
 
 ** Functions to render the board and the ants
@@ -908,7 +908,7 @@ different colors (having food or not):
                 (+ tx (* x scale)) (+ ty (* y scale))))))
 #+END_SRC
 Note the cleverly concise destructuring for the start and end drawing
-coordinates, needed in AWT's =[[http://docs.oracle.com/javase/1.4.2/docs/api/java/awt/Graphics.html#drawLine%28int,%20int,%20int,%20int%29][drawLine]]= method.
+coordinates, needed in AWT's [[http://docs.oracle.com/javase/1.4.2/docs/api/java/awt/Graphics.html#drawLine%28int,%20int,%20int,%20int%29][drawLine]] method.
 
 
 If a cell in the ants' world is not empty, it has one or more of three
